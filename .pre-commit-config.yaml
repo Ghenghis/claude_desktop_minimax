@@ -1,0 +1,22 @@
+# Pre-commit hooks for the Admin Gateway repo.
+# Install once:  pip install pre-commit && pre-commit install
+# Run manually:  pre-commit run --all-files
+# Update hooks:  pre-commit autoupdate
+
+repos:
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        name: flake8 (proxy + tests)
+        args: ['--max-line-length=120']
+        files: '^(claude-minimax-proxy\.py|tests/.*\.py)$'
+
+  - repo: local
+    hooks:
+      - id: py-compile
+        name: py_compile (syntax check)
+        entry: python -m py_compile
+        language: system
+        types: [python]
+        pass_filenames: true
