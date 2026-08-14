@@ -431,7 +431,18 @@ class Handler(BaseHTTPRequestHandler):
         if not expected:
             # No token file present -- refuse to forward (fail closed).
             return False
+        # Accept the shared token from any header a client can send. Claude
+        # Desktop's stock third-party gateway config can only emit its API key
+        # as X-Api-Key or Authorization: Bearer -- it has no way to send a
+        # custom X-Proxy-Token header. Accept all three so the Gap 1
+        # shared-secret check works with an unmodified Claude Desktop.
         provided = self.headers.get("X-Proxy-Token", "")
+        if not provided:
+            provided = self.headers.get("X-Api-Key", "")
+        if not provided:
+            auth = self.headers.get("Authorization", "")
+            if auth.startswith("Bearer "):
+                provided = auth[len("Bearer "):].strip()
         if not provided:
             return False
         # Constant-time compare; lengths should be identical (256-bit hex).
