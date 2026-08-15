@@ -15,19 +15,24 @@ MiniMax keys are kept only in a private folder. The loader searches `C:\Private`
 ## Current status
 
 1. **Claude Desktop** — working via a local model-renaming proxy.
-   - Claude Desktop rejects the non-Anthropic model name `MiniMax-M3` in `inferenceModels`.
-   - A tiny Python proxy (`claude-minimax-proxy.py`) accepts Anthropic-looking names from Claude Desktop, rewrites `claude-sonnet-4-5` to `MiniMax-M3`, and forwards the request unchanged to `https://api.minimax.io/anthropic/v1/messages`.
-   - The proxy has been started and verified end-to-end with a real MiniMax response.
-   - Steps:
-     1. Run `Start-ClaudeMiniMaxProxy.ps1` (keep the window open).
-     2. Restart Claude Desktop and choose the third-party gateway option.
-     3. Send a test message.
+   - The proxy (`claude-minimax-proxy.py`) accepts Anthropic-looking names from Claude Desktop, rewrites `claude-sonnet-4-5` to `MiniMax-M3`, and forwards the request to `https://api.minimax.io/anthropic/v1/messages`.
+   - Registry: `HKCU:\SOFTWARE\Policies\Claude` with `inferenceGatewayBaseUrl = http://127.0.0.1:48217/anthropic`.
 
-2. **Codex Desktop** — paid plan is the default; MiniMax backup profile exists.
-   - `Start-CodexDesktop.ps1` — opens Codex Desktop on the paid plan.
-   - `Start-CodexDesktop-Backup.ps1` — opens Codex Desktop on MiniMax when the paid quota runs out.
+2. **ChatGPT Codex** — working via the OpenAI Responses API.
+   - `~/.codex/config.toml` uses `model = "MiniMax-M3"`, `model_provider = "minimax_gateway"`, and `wire_api = "responses"`.
+   - The proxy translates `POST /v1/responses` to `POST /v1/chat/completions` and back.
 
 3. **Devin / Windsurf** — no guaranteed native way to redirect Cascade to a custom OpenAI-compatible endpoint. See `docs/Devin-Windsurf-MiniMax.md` for ACP/Roo Code alternatives.
+
+### Other clients that work with this gateway
+
+| Client | Override location |
+|---|---|
+| **Continue.dev** | `~/.continue/config.json` `apiBase` |
+| **Cline** | VS Code settings `cline.modelSettings.*.apiUrl` |
+| **Kilo Code** | `openai.baseUrl` in settings |
+
+They all point at `http://127.0.0.1:48217/v1` and pass the proxy token as `Authorization: Bearer <token>`.
 
 ## Quick start for Claude Desktop
 
@@ -39,3 +44,5 @@ C:\github\claude-codex-devin\Start-ClaudeMiniMaxProxy.ps1
 ```
 
 To stop the proxy later, run `Stop-ClaudeMiniMaxProxy.ps1`.
+
+See `docs/E2E-Blueprint.md` for the full request flows and `docs/Codex-Setup-Audit.md` for the issues that were fixed.

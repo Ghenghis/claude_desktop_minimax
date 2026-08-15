@@ -25,7 +25,7 @@ Enable both **Claude Desktop** and **ChatGPT Codex** to call MiniMax text, visio
 ## Phase 1 — Codex Configuration (DONE)
 
 - [x] Add `model_provider = "minimax_gateway"` and `[model_providers.minimax_gateway]` to `C:\Users\Admin\.codex\config.toml`.
-- [x] Use `wire_api = "chat"` pointing at `http://127.0.0.1:48217/v1`.
+- [x] Use `wire_api = "responses"` pointing at `http://127.0.0.1:48217/v1`.
 - [x] Use `auth.command` so Codex reads the proxy token from `G:\private\.proxy-token` on demand.
 
 **Artifacts:**
@@ -42,9 +42,9 @@ Enable both **Claude Desktop** and **ChatGPT Codex** to call MiniMax text, visio
 
 ---
 
-## Phase 3 — Proxy Wire-Protocol Expansion (NEXT)
+## Phase 3 — Proxy Wire-Protocol Expansion (DONE)
 
-- [ ] Add `/v1/responses` support to `claude-minimax-proxy.py` so Codex can switch to `wire_api = "responses"` without 404.
+- [x] Add `/v1/responses` support to `claude-minimax-proxy.py` so Codex can switch to `wire_api = "responses"` without 404.
 - [ ] Map OpenAI Responses API fields (tools, reasoning, output format) to MiniMax chat or Anthropic messages.
 - [ ] Preserve streaming, tool-call id, and stop-reason fidelity.
 
@@ -78,9 +78,9 @@ codex --model MiniMax-M3 --provider minimax_gateway "explain this repo"
 
 ---
 
-## Phase 6 — GitOps & Release (NEXT)
+## Phase 6 — GitOps & Release (IN PROGRESS)
 
-- [ ] Organize and commit Phase 0-2 changes to `Ghenghis/claude_desktop_minimax`.
+- [x] Organize and commit Phase 0-2 changes to `Ghenghis/claude_desktop_minimax`.
 - [ ] Push documentation or integration notes to `Ghenghis/Testing-Claude-Minimax-Mcp`.
 - [ ] Tag a release after Phase 3 acceptance.
 
@@ -90,7 +90,7 @@ codex --model MiniMax-M3 --provider minimax_gateway "explain this repo"
 
 | Decision | Rationale |
 |----------|-----------|
-| `wire_api = "chat"` for Codex | The proxy already implements OpenAI `/v1/chat/completions`. `wire_api = "responses"` will 404 until a `/v1/responses` translator is added. |
+| `wire_api = "responses"` for Codex | Codex now requires the OpenAI Responses API. The proxy translates `POST /v1/responses` to `POST /v1/chat/completions` and back. |
 | `Authorization: Bearer` for proxy token | Both Claude Desktop and Codex can emit a bearer token; the proxy accepts all three header forms. |
 | `auth.command` reads `.proxy-token` | Avoids persisting the token inside `config.toml` and refreshes on each use. |
 | Forward slashes in `G:/private/.proxy-token` | Eliminates TOML and PowerShell backslash escaping issues in `config.toml`. |

@@ -86,7 +86,7 @@ model_provider = "minimax_gateway"
 [model_providers.minimax_gateway]
 name = "MiniMax via local Claude gateway"
 base_url = "http://127.0.0.1:48217/v1"
-wire_api = "chat"
+wire_api = "responses"
 
 [model_providers.minimax_gateway.auth]
 command = "powershell"
@@ -99,7 +99,7 @@ refresh_interval_ms = 0
 
 ```mermaid
 graph LR
-    A[Codex CLI] -->|POST /v1/chat/completions<br/>Authorization: Bearer proxy-token| B[claude-minimax-proxy.py<br/>127.0.0.1:48217]
+    A[Codex CLI] -->|POST /v1/responses<br/>Authorization: Bearer proxy-token| B[claude-minimax-proxy.py<br/>127.0.0.1:48217]
     B -->|validate token| C[G:\private\.proxy-token]
     B -->|forward model + messages| D[MiniMax API<br/>https://api.minimax.io/v1]
     B -->|inject MINIMAX_API_KEY| E[G:\private\.env]
@@ -113,7 +113,7 @@ sequenceDiagram
     participant C as Codex CLI
     participant P as Proxy
     participant M as MiniMax
-    C->>P: POST /v1/chat/completions<br/>model: MiniMax-M3<br/>Authorization: Bearer <token>
+    C->>P: POST /v1/responses<br/>model: MiniMax-M3<br/>Authorization: Bearer <token>
     P->>P: Load .proxy-token & constant-time compare
     P->>P: Check BEARER_MODEL_ALLOWLIST_EXACT
     P->>M: POST /v1/chat/completions<br/>Authorization: Bearer <MINIMAX_KEY>
@@ -199,13 +199,29 @@ codex --model MiniMax-M3 --provider minimax_gateway "hello"
 | `missing or invalid X-Proxy-Token` (401) | Token missing/empty or wrong header | Re-run `Repair-MinimaxGateway.ps1` to regenerate token and ACL. |
 | `PermissionDenied` reading `.proxy-token` | ACL contains `Deny Everyone` | `Repair-MinimaxGateway.ps1` removes stale rules and re-sets owner/SYSTEM allow. |
 | Claude shows `auth_failed` | Registry points to wrong base URL or scheme | Verify `inferenceGatewayBaseUrl` ends in `/anthropic` and `inferenceGatewayAuthScheme` is `x-api-key`. |
-| Codex `unknown model` or `unsupported model` | `model` not in proxy allowlist or not MiniMax ID | Use exact `MiniMax-*` model IDs and `wire_api = "chat"`. |
-| `404 not found` from proxy | Codex called `/v1/responses` | The proxy currently implements `/v1/chat/completions` for Codex. Either keep `wire_api = "chat"` or add a `/v1/responses` translator to the proxy. |
+| Codex `unknown model` or `unsupported model` | `model` not in proxy allowlist or not MiniMax ID | Use exact `MiniMax-*` model IDs and `wire_api = "responses"`. |
+| `404 not found` from proxy | Codex called an unimplemented path or wrong wire API | The proxy now implements `/v1/responses`; ensure `wire_api = "responses"`. |
 
 ---
 
 ## 10. Future Upgrades
 
-1. **Responses API translator**: Add `/v1/responses` handler to the proxy so Codex can use `wire_api = "responses"` with full tool-calling and reasoning support.
+1. **~~Responses API translator~~** ✅ Done: proxy now translates `POST /v1/responses` to `POST /v1/chat/completions` and back.
 2. **Vision / speech / video pipelines**: Reuse the OpenAI-compatible `/v1/image_generation` and TTS models through dedicated `model_providers` profiles.
 3. **Auto-start / watchdog**: Convert `Start-ClaudeMiniMaxProxy.ps1` into a Windows Task Scheduler or `hp-mha-serena` governed runtime so the proxy starts with the user session.
+
+---
+
+## 11. Other clients with gateway support
+
+The same OpenAI-compatible `http://127.0.0.1:48217/v1` endpoint works with any client that lets you override the base URL:
+
+| Client | How to override base URL | Notes |
+|---|---|---|
+| **Claude Desktop** | Registry / policy key `inferenceGatewayBaseUrl` | Uses `POST /anthropic/v1/messages` with `X-Api-Key`. |
+| **ChatGPT Codex** | `~/.codex/config.toml` `[model_providers.minimax_gateway]` | Uses `POST /v1/responses` with `Authorization: Bearer`. |
+| **Continue.dev** | `~/.continue/config.json` `models[].apiBase` | Set `apiBase` to `http://127.0.0.1:48217/v1` and `apiKey` to the proxy token. |
+| **Cline** | VS Code settings `cline.modelSettings.*.apiUrl` | Point the OpenAI-compatible provider at the proxy URL. |
+| **Kilo Code** | Settings UI or `settings.json` `openai.baseUrl` | Same `http://127.0.0.1:48217/v1` endpoint. |
+
+Devin and Windsurf do **not** expose a native gateway/base-URL override. If you want them to use the same MiniMax backend, you need to wrap them with a separate OpenAI-compatible proxy outside Devin.
