@@ -43,6 +43,27 @@ wire_api = "responses"
 - Run `Start-CodexDesktop.ps1` to open Codex Desktop on the paid plan.
 - Run `Start-CodexDesktop-Backup.ps1` to open Codex Desktop on MiniMax when the paid plan runs out.
 
+## MiniMax features in Codex Desktop
+
+Codex Desktop can use the local gateway for chat (`MiniMax-M3`) and the `minimax-media` MCP server for media features:
+
+- Chat / text: `POST /v1/responses` -> `MiniMax-M3`
+- Speech / TTS: `POST /v1/audio/speech` -> `MiniMax T2A v2` (`speech-2.8-hd`)
+- Image generation: `POST /v1/images/generations` -> `image-01`
+- Image, speech, and video tools: `minimax_generate_speech`, `minimax_generate_image`, `minimax_generate_video` via the `minimax-media` MCP server
+
+Enable the `minimax-media` MCP server in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.minimax-media]
+command = "powershell"
+args = ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "G:\\Github\\Testing-Claude-Minimax-Mcp\\minimax-mcp-server\\Start-MinimaxMediaMcp.ps1"]
+enabled = true
+startup_timeout_sec = 30
+```
+
+When a feature or model is not supported, the gateway returns a `MiniMax error` and blocks the request; it never silently falls back to OpenAI.
+
 Sources:
 - https://platform.minimax.io/docs/token-plan/codex-cli
 - https://developers.openai.com/codex/config-advanced

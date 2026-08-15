@@ -20,6 +20,7 @@ Configure Claude Desktop with:
 
 import json
 import os
+import secrets
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -30,7 +31,7 @@ PORT = int(os.environ.get("CLAUDE_MINIMAX_PROXY_PORT", "48217"))
 # Anthropic-compatible chat (X-Api-Key)
 TARGET_BASE = "https://api.minimax.io/anthropic"
 # OpenAI-compatible + multimodal endpoints (Authorization: Bearer)
-OPENAI_BASE = "https://api.minimax.io/v1"
+OPENAI_BASE = "https://api.minimax.io"
 
 # Endpoints that take Authorization: Bearer rather than X-Api-Key.
 # Anything routed to OPENAI_BASE uses Bearer; everything routed to TARGET_BASE
@@ -332,6 +333,7 @@ class Handler(BaseHTTPRequestHandler):
         data = json.dumps(obj).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
+        self.send_header("X-Provider-Name", "minimax")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -361,9 +363,8 @@ class Handler(BaseHTTPRequestHandler):
             }
             self._send_json(200 if (key_ok and upstream_ok) else 503, body)
             return
-        if path in ("/v1/models", "/anthropic/v1/models"):
-            # Return models with anthropic_family_tier so they pass
-            # Claude Desktop's discovery / picker filters if discovery is on.
+        if path == "/anthropic/v1/models":
+            # Anthropic-style list for Claude Desktop's discovery / picker.
             models = [
                 {
                     "id": "claude-sonnet-4-5",
@@ -387,6 +388,31 @@ class Handler(BaseHTTPRequestHandler):
                     "owned_by": "minimax",
                     "anthropic_family_tier": "haiku",
                 },
+            ]
+            self._send_json(200, {"object": "list", "data": models})
+            return
+        if path == "/v1/models":
+            # OpenAI-style list for Codex Desktop.
+            minimax_models = [
+                "MiniMax-M3",
+                "MiniMax-M2.7",
+                "MiniMax-M2.7-highspeed",
+                "MiniMax-M2.5",
+                "MiniMax-M2.5-highspeed",
+                "MiniMax-M2.1",
+                "MiniMax-M2.1-highspeed",
+                "MiniMax-M2",
+                "MiniMax-H3",
+                "MiniMax-Hailuo-02",
+            ]
+            models = [
+                {
+                    "id": name,
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": "minimax",
+                }
+                for name in minimax_models
             ]
             self._send_json(200, {"object": "list", "data": models})
             return
@@ -414,11 +440,17 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/v1/chat/completions":
             self._proxy_openai_chat()
             return
-        if path == "/v1/image_generation":
+        if path == "/v1/image_generation" or path == "/v1/images/generations":
             self._proxy_image_generation()
             return
+        if path == "/v1/audio/speech":
+            self._proxy_audio_speech()
+            return
+        if path == "/v1/responses":
+            self._proxy_responses()
+            return
 
-        self._send_json(404, {"error": "not found", "path": self.path})
+        self._send_json(404, {"error": "MiniMax gateway does not support this path or feature", "provider": "minimax", "path": self.path})
 
     def _check_proxy_token(self):
         """Security Gap 1: validate the X-Proxy-Token header against the on-disk
@@ -683,6 +715,225 @@ class Handler(BaseHTTPRequestHandler):
             auth_style="bearer",
             forward_headers=("Content-Type", "Accept"),
         )
+
+    def _proxy_audio_speech(self):
+        '''Translate an OpenAI /v1/audio/speech POST into MiniMax T2A v2.'''
+        body = self._read_body()
+        if body is None:
+            return
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "invalid JSON"})
+            return
+
+        text = payload.get("input", "")
+        if not text or not isinstance(text, str) or not text.strip():
+            self._send_json(400, {"error": "input is required and must be a non-empty string"})
+            return
+        if len(text) > 10000:
+            self._send_json(400, {"error": "input exceeds 10,000 characters"})
+            return
+
+        model = payload.get("model", "tts-1")
+        if model in BEARER_MODEL_ALLOWLIST_EXACT:
+            target_model = model
+        elif model in ("tts-1", "tts-1-hd"):
+            target_model = "speech-2.8-hd"
+        else:
+            self._send_json(400, {"error": f"unsupported TTS model: {model}"})
+            return
+
+        output_format = payload.get("response_format", "mp3")
+        if output_format not in ("mp3", "wav", "flac"):
+            self._send_json(400, {"error": f"unsupported response_format: {output_format}"})
+            return
+
+        voice_map = {
+            "alloy": "English_Graceful_Lady",
+            "echo": "English_Insightful_Speaker",
+            "fable": "male-qn-qingse",
+            "onyx": "male-qn-qingse",
+            "nova": "English_Graceful_Lady",
+            "shimmer": "English_Insightful_Speaker",
+        }
+        voice_id = voice_map.get(payload.get("voice", ""), "English_Graceful_Lady")
+        speed = max(0.5, min(2.0, float(payload.get("speed", 1.0))))
+        pitch = max(-12, min(12, int(payload.get("pitch", 0))))
+        volume = max(0.1, min(10.0, float(payload.get("volume", 1.0))))
+
+        t2a_payload = {
+            "model": target_model,
+            "text": text,
+            "stream": False,
+            "voice_setting": {
+                "voice_id": voice_id,
+                "speed": speed,
+                "vol": volume,
+                "pitch": pitch,
+            },
+            "audio_setting": {
+                "sample_rate": 32000,
+                "bitrate": 128000,
+                "format": output_format,
+                "channel": 1,
+            },
+            "output_format": "hex",
+        }
+
+        key = load_minimax_key()
+        if not key:
+            self._send_json(500, {"error": "MiniMax API key not configured"})
+            return
+        try:
+            data = json.dumps(t2a_payload).encode("utf-8")
+            req = Request(OPENAI_BASE + "/v1/t2a_v2", data=data, method="POST")
+            req.add_header("Content-Type", "application/json")
+            req.add_header("Accept", "application/json")
+            req.add_header("Authorization", "Bearer " + key)
+            with urlopen(req, timeout=180) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+        except HTTPError as e:
+            err = e.read().decode("utf-8", "replace")
+            self._send_json(e.code, {"error": f"MiniMax T2A error: {err}"})
+            return
+        except Exception as e:
+            self._send_json(502, {"error": f"MiniMax T2A proxy error: {e}"})
+            return
+
+        base_resp = result.get("base_resp", {})
+        if base_resp.get("status_code", 0) != 0:
+            self._send_json(502, {
+                "error": f"MiniMax T2A error [{base_resp.get('status_code')}]: {base_resp.get('status_msg')}"
+            })
+            return
+
+        audio_hex = result.get("data", {}).get("audio", "")
+        if not audio_hex:
+            self._send_json(502, {"error": "MiniMax T2A returned no audio"})
+            return
+        try:
+            audio_bytes = bytes.fromhex(audio_hex)
+        except ValueError:
+            self._send_json(502, {"error": "MiniMax T2A returned invalid audio data"})
+            return
+
+        content_type = {
+            "mp3": "audio/mpeg",
+            "wav": "audio/wav",
+            "flac": "audio/flac",
+        }.get(output_format, "application/octet-stream")
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("X-Provider-Name", "minimax")
+        self.send_header("Content-Length", str(len(audio_bytes)))
+        self.end_headers()
+        self.wfile.write(audio_bytes)
+
+    def _call_openai_chat_sync(self, payload):
+        '''Call MiniMax /v1/chat/completions and return the parsed JSON.'''
+        body = json.dumps(payload).encode('utf-8')
+        key = load_minimax_key()
+        if not key:
+            raise RuntimeError('no MINIMAX_API_KEY available')
+        req = Request(OPENAI_BASE + '/v1/chat/completions', data=body, method='POST')
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('Accept', 'application/json')
+        req.add_header('Authorization', 'Bearer ' + key)
+        with urlopen(req, timeout=180) as resp:
+            return json.loads(resp.read().decode('utf-8'))
+
+    def _proxy_responses(self):
+        '''Translate a Codex Responses API call into MiniMax chat/completions.'''
+        body = self._read_body()
+        if body is None:
+            return
+        try:
+            payload = json.loads(body.decode('utf-8'))
+        except json.JSONDecodeError:
+            self._send_json(400, {'error': 'invalid JSON'})
+            return
+
+        model = payload.get('model', '')
+        if not _is_bearer_model_allowed(model):
+            self._send_json(400, {'error': f'unsupported model: {model}'})
+            return
+
+        raw_input = payload.get('input')
+        if isinstance(raw_input, str):
+            messages = [{'role': 'user', 'content': raw_input}]
+        elif isinstance(raw_input, list):
+            messages = []
+            for item in raw_input:
+                if isinstance(item, dict) and 'role' in item and 'content' in item:
+                    messages.append(item)
+                elif isinstance(item, dict) and item.get('type') == 'message' and 'content' in item:
+                    role = item.get('role', 'user')
+                    content = item.get('content')
+                    if isinstance(content, str):
+                        messages.append({'role': role, 'content': content})
+                    elif isinstance(content, list):
+                        text = ' '.join(c.get('text', '') for c in content if isinstance(c, dict) and 'text' in c)
+                        messages.append({'role': role, 'content': text})
+                elif isinstance(item, dict) and 'text' in item:
+                    messages.append({'role': 'user', 'content': item['text']})
+                else:
+                    self._send_json(400, {'error': 'unsupported input item'})
+                    return
+        else:
+            self._send_json(400, {'error': 'input must be string or array'})
+            return
+
+        chat_payload = {
+            'model': model,
+            'messages': messages,
+        }
+        for key in ('max_tokens', 'temperature', 'top_p', 'stop', 'n', 'stream'):
+            if key in payload:
+                chat_payload[key] = payload[key]
+        chat_payload['stream'] = False
+
+        try:
+            chat_resp = self._call_openai_chat_sync(chat_payload)
+        except HTTPError as e:
+            error_body = e.read() if hasattr(e, 'read') else b''
+            self._send_json(e.code, {'error': error_body.decode('utf-8', 'replace')})
+            return
+        except Exception as e:
+            self._send_json(502, {'error': f'proxy error: {e}'})
+            return
+
+        message = chat_resp.get('choices', [{}])[0].get('message', {})
+        text = message.get('content', '') or ''
+        chat_usage = chat_resp.get('usage', {})
+        usage = {
+            'input_tokens': chat_usage.get('prompt_tokens', 0),
+            'output_tokens': chat_usage.get('completion_tokens', 0),
+            'total_tokens': chat_usage.get('total_tokens', 0),
+        }
+        response = {
+            'id': 'resp_' + secrets.token_hex(12),
+            'object': 'response',
+            'created_at': int(time.time()),
+            'model': model,
+            'output': [
+                {
+                    'id': 'msg_' + secrets.token_hex(12),
+                    'type': 'message',
+                    'role': 'assistant',
+                    'status': 'completed',
+                    'content': [
+                        {
+                            'type': 'output_text',
+                            'text': text,
+                            'annotations': []
+                        }
+                    ]
+                }
+            ],
+            'usage': usage
+        }
+        self._send_json(200, response)
 
     def _proxy_upstream(self, target_url, body, auth_style, forward_headers=()):
         """Send `body` to `target_url`, inject the .env key in the requested
