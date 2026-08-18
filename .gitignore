@@ -38,6 +38,9 @@ AICE_DATA/
 *.tmp
 *.bak
 *.bak.*
+.port
+proxy.err
+proxy.out
 
 # Editor / OS noise
 .vscode/

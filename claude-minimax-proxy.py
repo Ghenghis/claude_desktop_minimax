@@ -237,19 +237,17 @@ def load_minimax_key():
 
 
 # Map each Anthropic-looking picker slot to a distinct MiniMax model.
-# sonnet  -> MiniMax-M3    (flagship, multimodal: text+image+video, 1M context)
-# opus    -> MiniMax-M2.7  (text + tool calls only, no image/video input)
-# haiku   -> MiniMax-M2.1  (text + tool calls only, no image/video input, faster)
+# All Claude family aliases route to the flagship model.
 DEFAULT_MINIMAX_MODEL = "MiniMax-M3"
 MODEL_MAP = {
     "claude-sonnet-4-5": "MiniMax-M3",
     "claude-sonnet-4": "MiniMax-M3",
     "claude-3-5-sonnet-20241022": "MiniMax-M3",
     "claude-3-5-sonnet": "MiniMax-M3",
-    "claude-opus-4-6": "MiniMax-M2.7",
-    "claude-opus-4": "MiniMax-M2.7",
-    "claude-haiku-4-5": "MiniMax-M2.1",
-    "claude-haiku-4": "MiniMax-M2.1",
+    "claude-opus-4-6": "MiniMax-M3",
+    "claude-opus-4": "MiniMax-M3",
+    "claude-haiku-4-5": "MiniMax-M3",
+    "claude-haiku-4": "MiniMax-M3",
 }
 
 
@@ -257,21 +255,16 @@ def pick_minimax_model(name):
     return MODEL_MAP.get(name, DEFAULT_MINIMAX_MODEL)
 
 
-# Model Chains waterfall (P0 #4): when the primary model fails after retry
-# exhaustion, try progressively cheaper/faster fallbacks. Each picker slot
-# gets its own chain. Inspired by CCPG's "Model Chains" pattern.
+# No mid-stream fallback. Each alias resolves to a single model: MiniMax-M3.
 MODEL_CHAINS = {
-    # Sonnet -> try flagship first; on fail, fall to mid-tier; on fail, fall to fast.
-    "claude-sonnet-4-5":       ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    "claude-sonnet-4":         ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    "claude-3-5-sonnet-20241022": ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    "claude-3-5-sonnet":       ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    # Opus -> M3 first (we use M2.7 normally but M3 wins on availability).
-    "claude-opus-4-6":         ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    "claude-opus-4":           ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
-    # Haiku -> fast path; fall to even faster highspeed.
-    "claude-haiku-4-5":        ["MiniMax-M2.1", "MiniMax-M2.7-highspeed"],
-    "claude-haiku-4":          ["MiniMax-M2.1", "MiniMax-M2.7-highspeed"],
+    "claude-sonnet-4-5": ["MiniMax-M3"],
+    "claude-sonnet-4": ["MiniMax-M3"],
+    "claude-3-5-sonnet-20241022": ["MiniMax-M3"],
+    "claude-3-5-sonnet": ["MiniMax-M3"],
+    "claude-opus-4-6": ["MiniMax-M3"],
+    "claude-opus-4": ["MiniMax-M3"],
+    "claude-haiku-4-5": ["MiniMax-M3"],
+    "claude-haiku-4": ["MiniMax-M3"],
 }
 
 
@@ -830,6 +823,91 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(audio_bytes)
 
+    def _proxy_responses_stream(self, payload, messages, model):
+        '''Return a Codex Responses API stream from a synchronous MiniMax call.'''
+        chat_payload = {
+            'model': model,
+            'messages': messages,
+        }
+        for key in ('max_tokens', 'temperature', 'top_p', 'stop', 'n'):
+            if key in payload:
+                chat_payload[key] = payload[key]
+        chat_payload['stream'] = False
+
+        try:
+            chat_resp = self._call_openai_chat_sync(chat_payload)
+        except HTTPError as e:
+            error_body = e.read() if hasattr(e, 'read') else b''
+            self._send_json(e.code, {'error': error_body.decode('utf-8', 'replace')})
+            return
+        except Exception as e:
+            self._send_json(502, {'error': f'proxy error: {e}'})
+            return
+
+        message = chat_resp.get('choices', [{}])[0].get('message', {})
+        text = message.get('content', '') or ''
+        chat_usage = chat_resp.get('usage', {})
+        usage = {
+            'input_tokens': chat_usage.get('prompt_tokens', 0),
+            'output_tokens': chat_usage.get('completion_tokens', 0),
+            'total_tokens': chat_usage.get('total_tokens', 0),
+        }
+        response_id = 'resp_' + secrets.token_hex(12)
+        message_id = 'msg_' + secrets.token_hex(12)
+        created_at = int(time.time())
+
+        response = {
+            'id': response_id,
+            'object': 'response',
+            'created_at': created_at,
+            'model': model,
+            'status': 'completed',
+            'output': [
+                {
+                    'id': message_id,
+                    'type': 'message',
+                    'role': 'assistant',
+                    'status': 'completed',
+                    'content': [
+                        {
+                            'type': 'output_text',
+                            'text': text,
+                            'annotations': []
+                        }
+                    ]
+                }
+            ],
+            'usage': usage
+        }
+        response_in_progress = {**response, 'status': 'in_progress', 'output': []}
+        item = response['output'][0]
+        part = item['content'][0]
+
+        def _event(name, data):
+            return f'event: {name}\ndata: {json.dumps(data)}\n\n'.encode('utf-8')
+
+        self.protocol_version = 'HTTP/1.1'
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+        self.send_header('Cache-Control', 'no-cache')
+        self.send_header('Connection', 'close')
+        self.send_header('X-Provider-Name', 'minimax')
+        self.end_headers()
+
+        events = [
+            ('response.created', {'type': 'response.created', 'response': response_in_progress, 'sequence_number': 0}),
+            ('response.output_item.added', {'type': 'response.output_item.added', 'item': {'id': message_id, 'type': 'message', 'role': 'assistant', 'status': 'in_progress'}, 'output_index': 0, 'sequence_number': 1}),
+            ('response.content_part.added', {'type': 'response.content_part.added', 'content_index': 0, 'output_index': 0, 'part': {'type': 'output_text', 'text': '', 'annotations': []}, 'sequence_number': 2}),
+            ('response.output_text.delta', {'type': 'response.output_text.delta', 'content_index': 0, 'delta': text, 'item_id': message_id, 'logprobs': [], 'output_index': 0, 'sequence_number': 3}),
+            ('response.output_text.done', {'type': 'response.output_text.done', 'content_index': 0, 'item_id': message_id, 'output_index': 0, 'sequence_number': 4}),
+            ('response.content_part.done', {'type': 'response.content_part.done', 'content_index': 0, 'output_index': 0, 'sequence_number': 5}),
+            ('response.output_item.done', {'type': 'response.output_item.done', 'item': item, 'output_index': 0, 'sequence_number': 6}),
+            ('response.completed', {'type': 'response.completed', 'response': response, 'sequence_number': 7}),
+        ]
+        for name, data in events:
+            self.wfile.write(_event(name, data))
+            self.wfile.flush()
+
     def _call_openai_chat_sync(self, payload):
         '''Call MiniMax /v1/chat/completions and return the parsed JSON.'''
         body = json.dumps(payload).encode('utf-8')
@@ -884,11 +962,14 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(400, {'error': 'input must be string or array'})
             return
 
+        if payload.get('stream'):
+            return self._proxy_responses_stream(payload, messages, model)
+
         chat_payload = {
             'model': model,
             'messages': messages,
         }
-        for key in ('max_tokens', 'temperature', 'top_p', 'stop', 'n', 'stream'):
+        for key in ('max_tokens', 'temperature', 'top_p', 'stop', 'n'):
             if key in payload:
                 chat_payload[key] = payload[key]
         chat_payload['stream'] = False
