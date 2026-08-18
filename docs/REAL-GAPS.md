@@ -10,14 +10,14 @@
 | 4 | `HERMES_AGENT_ENABLED` | **1** (in `.env`) | OpenHands / KiloCode autonomous bridge configured | `claude-minimax-v2\.env` sets `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL=http://127.0.0.1:3333` |
 | 5 | `OPENHANDS_URL` | **set** to `http://127.0.0.1:3333` | Hermes Agent has a local OpenHands endpoint | Adjust to `https://openhands.daveai.tech` if using the VPS |
 | 6 | Provider registry | **populated** | `hermes_provider_rank` now returns rankings for 6 providers after recording baseline outcomes | `hermes_provider_record_outcome` used for minimax/deepseek/deepinfra/siliconflow/lm-studio/ollama |
-| 7 | `GITLAB_TOKEN` env var | **missing** in shell (loaded from operator env file) | `glab` / direct CLI won't see token | Source the operator env file or add `GITLAB_TOKEN` to user env |
+| 7 | `GITLAB_TOKEN`/`GLAB_TOKEN` | **loadable** via `Set-GitLabToken.ps1` | `glab` / direct CLI needs token in shell env | Run `G:\Github\claude-codex-devin\Set-GitLabToken.ps1` with a token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt` |
 
 ## 2. Tool / MCP gaps
 
 | # | Gap | Status | Why it matters | Remediation |
 |---|---|---|---|---|
 | 8 | `Claude_Browser` MCP | only `preview_list` reachable | Cannot actually launch a browser session without a `.claude/launch.json` target | Create `~\.claude\launch.json` with a target URL |
-| 9 | `minimax-media` MCP | speech + image verified; music/video untested | Full media suite not proven | Run `minimax_generate_music` / `minimax_generate_video` in a safe test (billed) |
+| 9 | `minimax-media` MCP | image/speech/music work; **video and complex jobs still untested** | Video endpoint not proven | Run `minimax_generate_video` in a safe test (billed) or accept documented limitation |
 
 ## 3. Quick fixes
 

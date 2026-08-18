@@ -82,6 +82,8 @@ G:\Github\claude-codex-devin\Fix-RealGaps.ps1
 
 See `docs/REAL-GAPS.md` for the full audit.
 
+If you need the GitLab token for `glab`, run `Set-GitLabToken.ps1` with your token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt`.
+
 ## Windsurf / Devin MCP support
 
 For Windsurf or Devin, run:
