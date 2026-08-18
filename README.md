@@ -72,3 +72,13 @@ For a clean Windows 11 PC:
 
 See `docs/diagrams/Portability.md` for the bundle layout and `docs/diagrams/MCP-Gap.md` for the media MCP wiring.
 
+## Windsurf / Devin MCP support
+
+For Windsurf or Devin, run:
+
+```powershell
+G:\Github\claude-codex-devin\windsurf\Install-WindsurfMcpConfig.ps1
+```
+
+This writes `minimax-media` into `C:\Users\<you>\mcp_config.json` with the correct `python.exe` and `server.py` paths, so the `transport closed` problem does not reappear.
+
