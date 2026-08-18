@@ -45,6 +45,8 @@ G:\Github\claude-codex-devin
 G:\Github\claude-minimax-v2
 ```
 
+Place the MiniMax API key in `G:\private\minimax_key.txt` (plain text, one line). The loader falls back to `MINIMAX_API_KEY` in `G:\private\.env` if the key file is missing.
+
 Then run:
 
 ```powershell
@@ -55,5 +57,7 @@ G:\Github\claude-codex-devin\Start-ClaudeMinimaxV2.ps1
 ```
 
 To stop the gateway later, run `Stop-MinimaxGateway.ps1`.
+
+If anything feels off, the idempotent `Repair-ClaudeMinimaxV2.ps1` stops the gateway, validates Python compiles, and restarts/wires everything.
 
 See `docs/E2E-Blueprint.md` for request flows, `docs/Claude-Desktop-MiniMax.md` for the model-picker details, and `docs/Codex-Setup-Audit.md` for historical fixes.
