@@ -61,3 +61,14 @@ To stop the gateway later, run `Stop-MinimaxGateway.ps1`.
 If anything feels off, the idempotent `Repair-ClaudeMinimaxV2.ps1` stops the gateway, validates Python compiles, and restarts/wires everything.
 
 See `docs/E2E-Blueprint.md` for request flows, `docs/Claude-Desktop-MiniMax.md` for the model-picker details, and `docs/Codex-Setup-Audit.md` for historical fixes.
+
+## Portable Windows 11 install (Phase 5)
+
+For a clean Windows 11 PC:
+
+1. Build: `G:\Github\claude-codex-devin\portable\Build-PortableZip.ps1`
+2. Distribute: `G:\Github\claude-minimax-v2-portable.zip`
+3. On the target PC, extract the zip, place the key in `C:\private\minimax_key.txt`, and double-click `start-here.bat`.
+
+See `docs/diagrams/Portability.md` for the bundle layout and `docs/diagrams/MCP-Gap.md` for the media MCP wiring.
+

@@ -78,11 +78,13 @@ codex --model MiniMax-M3 --provider minimax_gateway "explain this repo"
 
 ---
 
-## Phase 6 — GitOps & Release (IN PROGRESS)
+## Phase 6 — GitOps & Release (DONE)
 
 - [x] Organize and commit Phase 0-2 changes to `Ghenghis/claude_desktop_minimax`.
-- [ ] Push documentation or integration notes to `Ghenghis/Testing-Claude-Minimax-Mcp`.
-- [ ] Tag a release after Phase 3 acceptance.
+- [x] Push documentation and integration notes to `claude-codex-devin/docs/diagrams` and `portable/`.
+- [x] Build `G:\Github\claude-minimax-v2-portable.zip`.
+- [x] Tag `v2.0.0` release.
+- [x] Fix `minimax-media` MCP `transport closed` by registering `python.exe` + `server.py` directly in `managedMcpServers`.
 
 ---
 

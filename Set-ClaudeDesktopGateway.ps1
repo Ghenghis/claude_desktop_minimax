@@ -49,26 +49,43 @@ Remove-ItemProperty -Path $regPath -Name "unstableDisableModelVerification" -Err
 $githubRoot = Split-Path -Parent $PSScriptRoot
 $hermesProofRoot = Join-Path $githubRoot "hermes3d-mcp-lock-orchestrator"
 $nodeCommand = (Get-Command node.exe -ErrorAction Stop).Source
-$minimaxLauncher = Join-Path $githubRoot "Testing-Claude-Minimax-Mcp\minimax-mcp-server\Start-MinimaxMediaMcp.ps1"
+# MiniMax media MCP: find a Python runtime that has the `mcp` package.
+# Claude Desktop's stdio transport is fragile through PowerShell, so we
+# register the actual python.exe plus server.py as the command/args.
+$minimaxServer = Join-Path $githubRoot "Testing-Claude-Minimax-Mcp\minimax-mcp-server\server.py"
 
-if (-not (Test-Path -LiteralPath $minimaxLauncher -PathType Leaf)) {
-    throw "Required MCP entry point is missing: $minimaxLauncher"
+if (-not (Test-Path -LiteralPath $minimaxServer -PathType Leaf)) {
+    throw "Required MCP server is missing: $minimaxServer"
+}
+
+$pythonCandidates = @(
+    $env:MINIMAX_MCP_PYTHON,
+    "C:\Python314\python.exe",
+    "C:\Python313\python.exe",
+    "C:\Python312\python.exe",
+    (Get-Command python.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1)
+) | Where-Object { $_ }
+
+$pythonPath = $null
+foreach ($candidate in $pythonCandidates) {
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+    & $candidate -c "from mcp.server.fastmcp import FastMCP" 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $pythonPath = $candidate
+        break
+    }
+}
+
+if (-not $pythonPath) {
+    throw "No Python runtime with the 'mcp' package found. Install the minimax-mcp-server requirements.txt."
 }
 
 $managedMcpServers = @(
     @{
         name = "minimax-media"
         transport = "stdio"
-        command = "powershell.exe"
-        args = @(
-            "-NoLogo",
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            $minimaxLauncher
-        )
+        command = $pythonPath
+        args = @($minimaxServer)
         toolPolicy = @{ "*" = "allow" }
     }
 )
