@@ -9,7 +9,7 @@
 | 3 | `glab` CLI | **installed** (v1.113.0) | GitLab fast-path / MR gates now available once `GITLAB_TOKEN`/`GLAB_TOKEN` is set | Add `GLAB_TOKEN=<token>` to `claude-minimax-v2\.env` or user env |
 | 4 | `HERMES_AGENT_ENABLED` | **1** (in `.env`) | OpenHands / KiloCode autonomous bridge configured | `claude-minimax-v2\.env` sets `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL=http://127.0.0.1:3333` |
 | 5 | `OPENHANDS_URL` | **set** to `http://127.0.0.1:3333` | Hermes Agent has a local OpenHands endpoint | Adjust to `https://openhands.daveai.tech` if using the VPS |
-| 6 | Provider registry | **configured** | `HERMES_PROVIDER_REGISTRY` points to `provider_registry.json` | Use `hermes_provider_record_outcome` to populate it |
+| 6 | Provider registry | **populated** | `hermes_provider_rank` now returns rankings for 6 providers after recording baseline outcomes | `hermes_provider_record_outcome` used for minimax/deepseek/deepinfra/siliconflow/lm-studio/ollama |
 | 7 | `GITLAB_TOKEN` env var | **missing** in shell (loaded from operator env file) | `glab` / direct CLI won't see token | Source the operator env file or add `GITLAB_TOKEN` to user env |
 
 ## 2. Tool / MCP gaps
