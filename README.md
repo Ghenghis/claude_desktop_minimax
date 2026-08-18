@@ -45,7 +45,7 @@ G:\Github\claude-codex-devin
 G:\Github\claude-minimax-v2
 ```
 
-Place the MiniMax API key in `G:\private\minimax_key.txt` (plain text, one line). The loader falls back to `MINIMAX_API_KEY` in `G:\private\.env` if the key file is missing.
+Place the MiniMax API key in `S:\private\minimax_key.txt` (plain text, one line) for fastest access. The loader falls back to `G:\private\minimax_key.txt`, then `MINIMAX_API_KEY` in `S:\private\.env` or `G:\private\.env`.
 
 Then run:
 
@@ -68,9 +68,19 @@ For a clean Windows 11 PC:
 
 1. Build: `G:\Github\claude-codex-devin\portable\Build-PortableZip.ps1`
 2. Distribute: `G:\Github\claude-minimax-v2-portable.zip`
-3. On the target PC, extract the zip, place the key in `C:\private\minimax_key.txt`, and double-click `start-here.bat`.
+3. On the target PC, extract the zip, place the key in `S:\private\minimax_key.txt` (or `G:\private` or `C:\private`), and double-click `start-here.bat`.
 
 See `docs/diagrams/Portability.md` for the bundle layout and `docs/diagrams/MCP-Gap.md` for the media MCP wiring.
+
+## Real gaps / release hardening
+
+Run `Fix-RealGaps.ps1` to close the known unconfigured items (OpenHands bridge, provider registry, browser launch target, `glab` install, etc.):
+
+```powershell
+G:\Github\claude-codex-devin\Fix-RealGaps.ps1
+```
+
+See `docs/REAL-GAPS.md` for the full audit.
 
 ## Windsurf / Devin MCP support
 

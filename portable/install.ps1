@@ -34,12 +34,12 @@ foreach ($file in $pyFiles) {
 Write-Host "All gateway Python files compile." -ForegroundColor Green
 
 # 3. Private key check
-$privateDrives = @('C:\private', 'G:\private', 'S:\private') | Where-Object { Test-Path $_ -PathType Container }
+$privateDrives = @('S:\private', 'G:\private', 'C:\private') | Where-Object { Test-Path $_ -PathType Container }
 $found = $privateDrives | Where-Object {
     (Test-Path (Join-Path $_ 'minimax_key.txt')) -or (Test-Path (Join-Path $_ '.env'))
 }
 if (-not $found) {
-    Write-Host "No MiniMax key found in any of C:\private, G:\private, S:\private." -ForegroundColor Red
+    Write-Host "No MiniMax key found in any of S:\private, G:\private, C:\private." -ForegroundColor Red
     New-Item -ItemType Directory -Path $PrivateRoot -Force | Out-Null
     throw "Place your MiniMax API key in $PrivateRoot\minimax_key.txt (plain text, one line) and run start-here.bat again."
 }
