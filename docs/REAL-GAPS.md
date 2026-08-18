@@ -6,18 +6,18 @@
 |---|---|---|---|---|
 | 1 | `git` CLI | **present** | Hermes `git-*` gates work | None |
 | 2 | `gh` CLI | **present** | GitHub fast path works | None |
-| 3 | `glab` CLI | **installed** (v1.113.0) | GitLab fast-path / MR gates now available once `GITLAB_TOKEN`/`GLAB_TOKEN` is set | Add `GLAB_TOKEN=<token>` to `claude-minimax-v2\.env` or user env |
-| 4 | `HERMES_AGENT_ENABLED` | **1** (in `.env`) | OpenHands / KiloCode autonomous bridge configured | `claude-minimax-v2\.env` sets `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL=http://127.0.0.1:3333` |
-| 5 | `OPENHANDS_URL` | **set** to `http://127.0.0.1:3333` | Hermes Agent has a local OpenHands endpoint | Adjust to `https://openhands.daveai.tech` if using the VPS |
-| 6 | Provider registry | **populated** | `hermes_provider_rank` now returns rankings for 6 providers after recording baseline outcomes | `hermes_provider_record_outcome` used for minimax/deepseek/deepinfra/siliconflow/lm-studio/ollama |
+| 3 | `glab` CLI | **installed** (v1.113.0) | GitLab fast-path / MR gates now available once `GLAB_TOKEN` is set in shell env | Run `G:\Github\claude-codex-devin\Set-GitLabToken.ps1` with a token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt` |
+| 4 | `HERMES_AGENT_ENABLED` | **1** (in `hermes3d-locks` MCP config) | OpenHands / KiloCode autonomous bridge now configured in the actual server env | `C:\Users\Admin\.codeium\windsurf\mcp_config.json` sets `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL=http://127.0.0.1:3333` |
+| 5 | `OPENHANDS_URL` | **set** in `hermes3d-locks` MCP config to `http://127.0.0.1:3333` | Hermes Agent has a local OpenHands endpoint | Adjust to `https://openhands.daveai.tech` in `mcp_config.json` if using the VPS; reload the `hermes3d-locks` MCP server |
+| 6 | Provider registry | **populated** | `provider_registry.json` created and `HERMES_PROVIDER_REGISTRY` added to `hermes3d-locks` MCP config | `provider_registry.json` is at `G:\Github\claude-codex-devin\.hermes3d_orchestrator\provider_registry.json`; reload the server to get `registry_load_ok: true` |
 | 7 | `GITLAB_TOKEN`/`GLAB_TOKEN` | **loadable** via `Set-GitLabToken.ps1` | `glab` / direct CLI needs token in shell env | Run `G:\Github\claude-codex-devin\Set-GitLabToken.ps1` with a token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt` |
 
 ## 2. Tool / MCP gaps
 
 | # | Gap | Status | Why it matters | Remediation |
 |---|---|---|---|---|
-| 8 | `Claude_Browser` MCP | only `preview_list` reachable | Cannot actually launch a browser session without a `.claude/launch.json` target | Create `~\.claude\launch.json` with a target URL |
-| 9 | `minimax-media` MCP | image/speech/music work; **video and complex jobs still untested** | Video endpoint not proven | Run `minimax_generate_video` in a safe test (billed) or accept documented limitation |
+| 8 | `Claude_Browser` MCP | **launch.json created** at `C:\Users\Admin\.claude\launch.json` | `preview_list` should now show targets after the relevant browser MCP reloads | If still empty, reload the `devin/puppeteer` or `claude-browser` MCP server |
+| 9 | `minimax-media` MCP | **image/speech/music work; video fails with plan error** | `minimax_generate_video` returns `400` "TokenPlan or Credit does not currently support MiniMax-H3 series models (2013)" | This is an account/plan limit, not a config issue; contact MiniMax or upgrade plan to enable video |
 
 ## 3. Quick fixes
 
