@@ -1,0 +1,43 @@
+tools:
+  serena:
+    purpose: semantic code navigation and symbol-aware editing
+    use_when: source_code_project_requires_precise_navigation_or_refactoring
+    do_not_use_when: target_is_only_binary_or_apk_without_source
+    risk: workspace_read_write
+    failure: disable_and_fall_back_to_host_code_tools_after_two_identical_failures
+  scrcpy_mcp:
+    purpose: fast Android visual and device control
+    use_when: android_ui_device_or_runtime_behavior_must_be_observed_or_operated
+    do_not_use_when: no_designated_test_device_or_task_is_static_only
+    risk: device_control_arbitrary_adb_shell_file_transfer
+    proof: screenshot_ui_state_or_log_plus_deterministic_maestro_flow
+  maestro:
+    purpose: deterministic mobile E2E authoring_and_execution
+    use_when: critical_android_flow_requires_repeatable_proof
+    do_not_use_when: only_static_analysis_is_required
+    risk: device_app_control
+    proof: passing_flow_file_and_run_result
+  jadx_ai_mcp:
+    purpose: live JADX GUI decompiler navigation
+    use_when: android_apk_classes_resources_xrefs_must_be_inspected
+    do_not_use_when: target_is_not_android_jvm_or_dex_related
+    risk: local_analysis
+    proof: cited_class_method_resource_or_xref
+  radare2_mcp:
+    purpose: native_binary_static_analysis
+    use_when: native_exe_dll_so_or_il2cpp_binary_requires_analysis
+    do_not_use_when: higher_level_managed_or_jvm_tools_answer_the_question
+    risk: configure_readonly_sandbox_restricted_tools_for_first_pass
+    proof: address_function_xref_or_symbol_evidence
+  x64dbg_mcp:
+    purpose: Windows user_mode dynamic debugging
+    use_when: runtime_behavior_requires_breakpoints_trace_memory_or_state_comparison
+    do_not_use_when: static_analysis_is_sufficient
+    risk: process_execution_and_debugger_control
+    proof: debugger_state_snapshot_trace_or_reproduced_behavior
+  playwright_cli:
+    purpose: token_efficient_browser_PWA_Electron_E2E
+    use_when: web_accessible_user_flow_requires_test_or_repair
+    do_not_use_when: native_mobile_or_native_windows_UI_is_the_primary_surface
+    risk: browser_and_network_actions
+    proof: critical_flow_replay_plus_trace_or_screenshot_on_failure

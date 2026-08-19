@@ -1,0 +1,13 @@
+﻿{
+    "mcpServers": {
+        "serena-semantic": {
+            "name": "Serena (semantic code tools)",
+            "command": "serena",
+            "args": [
+                "start-mcp-server",
+                "--context=desktop-app"
+            ],
+            "notes": "Install serena-agent once with `uv tool install -p 3.13 serena-agent`. The desktop-app context uses the directory Claude Desktop was launched against, so no --project or --context YAML file is required. Name is `serena-semantic` to avoid colliding with any existing `hp-mha-serena` registry entry."
+        }
+    }
+}

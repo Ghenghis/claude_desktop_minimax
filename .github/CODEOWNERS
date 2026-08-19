@@ -1,0 +1,20 @@
+# CODEOWNERS — Admin Gateway
+# Each line is a file pattern followed by one or more owners.
+# GitHub auto-assigns reviewers on PRs that touch matching files.
+
+# Default: project lead reviews everything
+*                                  @Ghenghis
+
+# High-stakes files need a second pair of eyes
+claude-minimax-proxy.py            @Ghenghis
+docs/threat-model.md               @Ghenghis
+docs/adr/                          @Ghenghis
+Set-ClaudeDesktopGateway.ps1       @Ghenghis
+Harden-MinimaxEnv.ps1              @Ghenghis
+scripts/Generate-ProxyToken.ps1    @Ghenghis
+
+# Skills and harness contract docs
+.harness/                          @Ghenghis
+CONTRIBUTING.md                    @Ghenghis
+SECURITY.md                        @Ghenghis
+CHANGELOG.md                       @Ghenghis

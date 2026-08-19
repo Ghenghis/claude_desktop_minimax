@@ -1,0 +1,12 @@
+﻿{
+    "mcpServers":  {
+                       "ghidra-gui":  {
+                                          "name":  "GhidraMCP (GUI)",
+                                          "command":  "python",
+                                          "args":  [
+                                                       "\u003cPATH_TO_REPO\u003e/GhidraMCP/mcp_server.py"
+                                                   ],
+                                          "notes":  "LaurieWired GhidraMCP plugin; requires Ghidra GUI open."
+                                      }
+                   }
+}

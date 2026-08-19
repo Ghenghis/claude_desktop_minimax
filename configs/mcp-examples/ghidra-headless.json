@@ -1,0 +1,15 @@
+﻿{
+    "mcpServers":  {
+                       "ghidra-headless":  {
+                                               "name":  "Ghidra headless MCP",
+                                               "command":  "python",
+                                               "args":  [
+                                                            "\u003cPATH_TO_REPO\u003e/ghidra-mcp/server.py"
+                                                        ],
+                                               "notes":  "Requires Ghidra, Java, and the PyGhidra MCP server installed.",
+                                               "env":  {
+                                                           "GHIDRA_INSTALL_DIR":  "C:\\tools\\ghidra"
+                                                       }
+                                           }
+                   }
+}

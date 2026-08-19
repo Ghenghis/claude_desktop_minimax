@@ -1,0 +1,12 @@
+﻿{
+    "mcpServers":  {
+                       "hyperv-mcp":  {
+                                          "name":  "Hyper-V MCP",
+                                          "command":  "python",
+                                          "args":  [
+                                                       "\u003cPATH_TO_REPO\u003e/hyperv-mcp/src/hyperv_mcp.py"
+                                                   ],
+                                          "notes":  "VM lifecycle and checkpoints; keep to ISOLATED-LAB profile."
+                                      }
+                   }
+}

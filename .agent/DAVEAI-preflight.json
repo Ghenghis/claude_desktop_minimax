@@ -1,0 +1,169 @@
+﻿{
+    "generated":  "2026-08-18T15:53:21.1218252-07:00",
+    "machine":  "DESKTOP-11ANAB1",
+    "os":  "Microsoft Windows NT 10.0.26100.0",
+    "tools":  [
+                  {
+                      "name":  "git",
+                      "found":  true,
+                      "path":  "C:\\Program Files\\Git\\cmd\\git.exe"
+                  },
+                  {
+                      "name":  "node",
+                      "found":  true,
+                      "path":  "C:\\node22\\node-v22.16.0-win-x64\\node.exe"
+                  },
+                  {
+                      "name":  "npm",
+                      "found":  true,
+                      "path":  "C:\\node22\\node-v22.16.0-win-x64\\npm.ps1"
+                  },
+                  {
+                      "name":  "npx",
+                      "found":  true,
+                      "path":  "C:\\node22\\node-v22.16.0-win-x64\\npx.ps1"
+                  },
+                  {
+                      "name":  "python",
+                      "found":  true,
+                      "path":  "C:\\Python314\\python.exe"
+                  },
+                  {
+                      "name":  "py",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "java",
+                      "found":  true,
+                      "path":  "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.8-hotspot\\bin\\java.exe"
+                  },
+                  {
+                      "name":  "pwsh",
+                      "found":  true,
+                      "path":  "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
+                  },
+                  {
+                      "name":  "winget",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "docker",
+                      "found":  true,
+                      "path":  "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"
+                  },
+                  {
+                      "name":  "claude",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "uv",
+                      "found":  true,
+                      "path":  "C:\\Python313\\Scripts\\uv.exe"
+                  },
+                  {
+                      "name":  "serena",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "adb",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "scrcpy",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "ffmpeg",
+                      "found":  true,
+                      "path":  "C:\\ProgramData\\chocolatey\\bin\\ffmpeg.exe"
+                  },
+                  {
+                      "name":  "maestro",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "jadx",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "jadx_mcp_server",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "r2",
+                      "found":  true,
+                      "path":  "C:\\ProgramData\\chocolatey\\bin\\r2.exe"
+                  },
+                  {
+                      "name":  "r2pm",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "x64dbg-automate-mcp",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "winapp",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "playwright-cli",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "ghidraRun",
+                      "found":  true,
+                      "path":  "C:\\Tools\\Ghidra\\ghidra_12.1.2_PUBLIC\\ghidraRun.bat"
+                  },
+                  {
+                      "name":  "apktool",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "AssetRipper",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "Cpp2IL",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "dnSpyEx",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "ghidra",
+                      "found":  false,
+                      "path":  null
+                  },
+                  {
+                      "name":  "r2frida",
+                      "found":  false,
+                      "path":  null
+                  }
+              ],
+    "adb_devices":  null,
+    "notes":  [
+                  "This checker is read-only except for writing this report.",
+                  "A found executable does not prove its MCP server is configured; smoke-test each active profile separately.",
+                  "Missing optional tools are not failures. Install only what the selected profile requires.",
+                  "Safe preflight skipped Hyper-V optional feature check because it requires elevation and can hang."
+              ]
+}

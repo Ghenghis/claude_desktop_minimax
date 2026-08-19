@@ -1,0 +1,15 @@
+﻿{
+    "mcpServers":  {
+                       "scrcpy-mcp":  {
+                                          "name":  "scrcpy-mcp",
+                                          "command":  "python",
+                                          "args":  [
+                                                       "\u003cPATH_TO_REPO\u003e/scrcpy-mcp-server/src/server.py"
+                                                   ],
+                                          "notes":  "Requires ADB and scrcpy on PATH; set ANDROID_SERIAL if multiple devices.",
+                                          "env":  {
+                                                      "ANDROID_SERIAL":  ""
+                                                  }
+                                      }
+                   }
+}

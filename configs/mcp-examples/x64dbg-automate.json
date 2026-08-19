@@ -1,0 +1,12 @@
+﻿{
+    "mcpServers":  {
+                       "x64dbg-automate":  {
+                                               "name":  "x64dbg Automate MCP",
+                                               "command":  "python",
+                                               "args":  [
+                                                            "\u003cPATH_TO_REPO\u003e/x64dbg-automate-pyclient/x64dbg_automate_mcp.py"
+                                                        ],
+                                               "notes":  "Requires x64dbg and the automate plugin; keep to WINDOWS-RE profile."
+                                           }
+                   }
+}

@@ -1,0 +1,15 @@
+﻿{
+    "mcpServers":  {
+                       "android-mcp-lean-alternative":  {
+                                                            "name":  "Android MCP lean",
+                                                            "command":  "python",
+                                                            "args":  [
+                                                                         "\u003cPATH_TO_REPO\u003e/android-mcp-server/src/android_mcp.py"
+                                                                     ],
+                                                            "notes":  "ADB-only lightweight alternative to scrcpy-mcp.",
+                                                            "env":  {
+                                                                        "ANDROID_SERIAL":  ""
+                                                                    }
+                                                        }
+                   }
+}

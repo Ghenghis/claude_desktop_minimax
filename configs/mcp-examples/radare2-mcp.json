@@ -1,0 +1,13 @@
+﻿{
+    "mcpServers":  {
+                       "radare2-mcp":  {
+                                           "name":  "radare2 MCP",
+                                           "command":  "r2pm",
+                                           "args":  [
+                                                        "-r",
+                                                        "mcp"
+                                                    ],
+                                           "notes":  "Official radare2 MCP; configure read-only/sandbox for first pass."
+                                       }
+                   }
+}

@@ -1,0 +1,13 @@
+﻿{
+    "mcpServers":  {
+                       "playwright-mcp":  {
+                                              "name":  "Playwright MCP",
+                                              "command":  "npx",
+                                              "args":  [
+                                                           "-y",
+                                                           "@anthropic/playwright-mcp"
+                                                       ],
+                                              "notes":  "Persistent browser MCP; prefer Playwright CLI/Skills for one-off tests."
+                                          }
+                   }
+}

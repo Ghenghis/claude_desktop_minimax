@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claude-codex-devin.local/schemas/proxy-config.schema.json",
+  "title": "Admin Gateway Proxy Config",
+  "description": "Schema for proxy configuration: env vars, model map, and Model Chains.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "CLAUDE_MINIMAX_PROXY_PORT": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535,
+      "default": 48217,
+      "description": "Loopback port the proxy listens on."
+    },
+    "MINIMAX_ENV_FILE": {
+      "type": ["string", "null"],
+      "description": "Absolute path to the .env file containing MINIMAX_API_KEY."
+    },
+    "MINIMAX_PROXY_TOKEN_FILE": {
+      "type": ["string", "null"],
+      "description": "Absolute path to the proxy-token file used for X-Proxy-Token auth."
+    },
+    "MINIMAX_PROXY_TOKEN_DISABLED": {
+      "type": ["string", "boolean"],
+      "description": "Set to '1' or true only in dev to skip token auth. Production must be false."
+    },
+    "MINIMAX_CACHE_TTL_SECONDS": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 86400,
+      "description": "SHA-256 exact-match cache TTL."
+    },
+    "MINIMAX_CACHE_MAX_ENTRIES": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 512,
+      "description": "Hard cap on cache entries (naive LRU eviction)."
+    },
+    "model_map": {
+      "type": "object",
+      "description": "Picker slot → MiniMax model mapping (Claude Desktop registry uses Anthropic-looking names).",
+      "additionalProperties": { "type": "string" },
+      "examples": [{
+        "claude-sonnet-4-5": "MiniMax-M3",
+        "claude-opus-4-6": "MiniMax-M2.7",
+        "claude-haiku-4-5": "MiniMax-M2.1"
+      }]
+    },
+    "model_chains": {
+      "type": "object",
+      "description": "Per-picker Model Chains waterfall. First model is primary; subsequent are fallbacks tried in order.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "examples": [{
+        "claude-sonnet-4-5": ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
+        "claude-haiku-4-5": ["MiniMax-M2.1", "MiniMax-M2.7-highspeed"]
+      }]
+    }
+  }
+}

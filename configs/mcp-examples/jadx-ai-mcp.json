@@ -1,0 +1,12 @@
+﻿{
+    "mcpServers":  {
+                       "jadx-ai-mcp":  {
+                                           "name":  "JADX AI MCP",
+                                           "command":  "python",
+                                           "args":  [
+                                                        "\u003cPATH_TO_REPO\u003e/jadx-ai-mcp/jadx_ai_mcp_server.py"
+                                                    ],
+                                           "notes":  "Requires a running JADX GUI with the AI plugin enabled."
+                                       }
+                   }
+}

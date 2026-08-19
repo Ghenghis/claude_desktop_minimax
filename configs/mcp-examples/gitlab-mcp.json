@@ -1,0 +1,16 @@
+﻿{
+    "mcpServers":  {
+                       "gitlab-mcp":  {
+                                          "name":  "GitLab MCP",
+                                          "command":  "npx",
+                                          "args":  [
+                                                       "-y",
+                                                       "@gitlab/mcp"
+                                                   ],
+                                          "notes":  "Official GitLab MCP; requires GITLAB_TOKEN.",
+                                          "env":  {
+                                                      "GITLAB_TOKEN":  "$env:GITLAB_TOKEN"
+                                                  }
+                                      }
+                   }
+}

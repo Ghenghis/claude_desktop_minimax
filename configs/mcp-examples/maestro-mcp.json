@@ -1,0 +1,12 @@
+﻿{
+    "mcpServers":  {
+                       "maestro-mcp":  {
+                                           "name":  "Maestro MCP",
+                                           "command":  "maestro",
+                                           "args":  [
+                                                        "mcp"
+                                                    ],
+                                           "notes":  "Maestro CLI wrapped as MCP for mobile E2E flow authoring."
+                                       }
+                   }
+}

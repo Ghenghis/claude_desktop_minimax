@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "minimax-media": {
+      "command": "C:\\Python314\\python.exe",
+      "args": [
+        "G:\\Github\\Testing-Claude-Minimax-Mcp\\minimax-mcp-server\\server.py"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "MCP_LOG_LEVEL": "debug",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

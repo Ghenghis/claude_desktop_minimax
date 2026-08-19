@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DAVE-AI Tool Contract",
+  "type": "object",
+  "required": ["name", "purpose", "use_when", "do_not_use_when", "risk", "proof"],
+  "properties": {
+    "name": {"type": "string"},
+    "purpose": {"type": "string"},
+    "use_when": {"type": "array", "items": {"type": "string"}},
+    "do_not_use_when": {"type": "array", "items": {"type": "string"}},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "returns": {"type": "array", "items": {"type": "string"}},
+    "failure": {"type": "array", "items": {"type": "string"}},
+    "risk": {"enum": ["read", "write", "execute", "network", "privileged", "destructive"]},
+    "proof": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
