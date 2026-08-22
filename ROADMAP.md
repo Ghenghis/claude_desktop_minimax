@@ -1,107 +1,137 @@
-# Consolidated ROADMAP: Claude Desktop / Codex ↔ MiniMax Gateway
+# MiniMax Desktop Integration — Action Plan & Roadmap
 
-## Project Goal
+Goal: Claude Desktop and Codex Desktop fully driven by MiniMax — text, image,
+speech, video, voices — stable, self-healing, and verifiable. Progress is
+tracked per pass; every item has an acceptance criterion and an evidence
+command. Run `.\Test-MiniMaxStack.ps1` (the interactive harness) at any time
+to check the whole stack.
 
-Enable both **Claude Desktop** and **ChatGPT Codex** to call MiniMax text, vision, speech, and image/video models through a single local gateway (`claude-minimax-proxy.py`) running on `127.0.0.1:48217`, and document the end-to-end integration with blueprints and automation.
-
----
-
-## Phase 0 — Claude Desktop 401 Fix (DONE)
-
-- [x] Audit `docs/admin-gateway-audit`, `architecture.md`, `threat-model.md`, and existing `ROADMAP/*` artifacts.
-- [x] Patch `claude-minimax-proxy.py` to accept the proxy token via `X-Api-Key` or `Authorization: Bearer` in addition to `X-Proxy-Token`.
-- [x] Generate `G:\private\.proxy-token` (256-bit random hex) and apply an owner-only ACL.
-- [x] Configure `HKCU:\SOFTWARE\Policies\Claude` with the gateway base URL, API key, and `x-api-key` auth scheme.
-- [x] Verify end-to-end: `POST /anthropic/v1/messages` returns `200` from MiniMax `MiniMax-M2.1`.
-
-**Artifacts:**
-
-- `claude-minimax-proxy.py` (patched auth, lines 430-449)
-- `scripts/Repair-MinimaxGateway.ps1` (idempotent token/ACL/registry/proxy repair + verify)
-- Registry values under `HKCU:\SOFTWARE\Policies\Claude`
+Legend: `[x]` done+verified · `[~]` in progress · `[ ]` pending
 
 ---
 
-## Phase 1 — Codex Configuration (DONE)
+## Layered Audit (current state)
 
-- [x] Add `model_provider = "minimax_gateway"` and `[model_providers.minimax_gateway]` to `C:\Users\Admin\.codex\config.toml`.
-- [x] Use `wire_api = "responses"` pointing at `http://127.0.0.1:48217/v1`.
-- [x] Use `auth.command` so Codex reads the proxy token from `G:\private\.proxy-token` on demand.
+| Layer | Claude Desktop | Codex Desktop |
+|---|---|---|
+| L1 Text gateway | `claude-minimax-proxy` service :48217 — OK | `api2codex` service :48218 — OK |
+| L2 Model picker | 8 slots visible, tier-mapping fixed (M3 / M2.7 / Highspeed) | `model_catalog_json` wired; CLI catalog resolves 3 MiniMax models; Desktop picker render pending restart (known upstream filter issues #19694/#37379) |
+| L3 MCP orchestration | `mini` single server — OK (daves-tools 6 tools) | `mini` single server — OK |
+| L4 Media/tools | Official `minimax` 8 tools + custom media 4 + coding-plan vision/search, all via mini | same via mini (shared) |
+| L5 Reliability harness | services + disabled watchdog; no smoke-test | services; no smoke-test |
+| L6 Docs/evidence | AGENTS.md runbook | AGENTS.md runbook |
 
-**Artifacts:**
+## Open-source cross-references (patterns adopted)
 
-- Updated `C:\Users\Admin\.codex\config.toml`
+- **MiniMax-AI/MiniMax-MCP (official)** — installed in an isolated venv and
+  verified: `text_to_audio`, `list_voices`, `voice_clone`, `voice_design`,
+  `play_audio`, `text_to_image`, `generate_video`, `query_video_generation`.
+- **MiniMax coding-plan MCP** — installed in a pinned venv and verified:
+  `web_search`, `understand_image`.
+- **megamen32 gist / Keksuccino Better-Codex-App-Custom-Provider-Support** —
+  `model_catalog_json` schema for MiniMax models in the Codex picker; also the
+  documented Desktop filtering workaround (block `ab.chatgpt.com`, clear WebView
+  Local Storage) if the picker hides catalog models.
+- **alnsergeev/codex-profile-launcher** — profile-file pattern
+  (`~/.codex/<name>.config.toml`) for switching OpenAI ↔ MiniMax backends.
+- **LiteLLM proxy** — evaluated; hangs on this host (see AGENTS.md). Custom
+  proxy remains primary; keep LiteLLM disabled unless upstream fixes land.
+- **MiniMax platform notes** — Music Generation API is discontinued for new
+  users as of 2026-08-20 (existing paying users unaffected); speech-2.8-hd is
+  current TTS flagship; Hailuo-2.3 / MiniMax-H3 are current video models;
+  video flow is async: create → poll → file retrieve.
 
 ---
 
-## Phase 2 — Documentation (IN PROGRESS)
+## Pass 1 — Stabilize text core (DONE)
 
-- [x] Write `docs/E2E-Blueprint.md` with detailed Mermaid diagrams for both Claude Desktop and Codex request flows.
-- [x] Write this `ROADMAP.md` tying research, fixes, and next steps together.
-- [ ] (Optional) Add short `README` cross-links in `Testing-Claude-Minimax-Mcp` for discoverability.
+- [x] Claude gateway on C:, Windows service, token auth, sanitizer
+      — Evidence: `sc query claude-minimax-proxy`; POST :48217 returns clean text
+- [x] Codex gateway (`api2codex`) on C:, Windows service
+      — Evidence: `sc query api2codex`; POST :48218/v1/responses returns text
+- [x] `max_output_tokens` mapping; thinking/reasoning stripping in both proxies
+- [x] `mini` MCP orchestrator with daves-tools fixed (6 tools)
+- [x] LiteLLM evaluated, documented, disabled (startup hang)
+
+## Pass 2 — Truthful model pickers (IN PROGRESS)
+
+- [x] Claude: MODEL_MAP tiers fixed — sonnet→M3, opus→M2.7, haiku→M2.7-highspeed
+      — Evidence: 3 aliases POSTed, upstream model echoed per tier
+- [x] Codex: `model_catalog_json` built from bundled catalog + 3 MiniMax models
+      — Evidence: `codex debug models` lists MiniMax-M3/M2.7/M2.7-highspeed
+- [ ] Codex Desktop restart → confirm picker shows MiniMax entries
+      — If hidden: apply documented workaround (hosts entry for `ab.chatgpt.com`,
+        delete WebView `Local Storage\leveldb`, full restart)
+- [ ] Claude: verify picker slot labels match actual routed models in a live chat
+      (ask "which model are you?" per slot is unreliable; use proxy log evidence)
+- [ ] Optional: 1M-context slots (`supports1m`) verified against MiniMax M3 1M
+
+## Pass 3 — Complete media tooling (image, speech, voices, video)
+
+Target: parity with official MiniMax-MCP tool set, served through `mini` so
+both chat UIs get the same tools.
+
+- [~] `minimax-media` server pinned to C: + registered in mini with env
+- [x] Official MCP provides `list_voices`, `voice_clone`, `voice_design`, and
+      `query_video_generation`; verified through `mini ls minimax`
+- [x] Add custom Files list/retrieve/download and Video Agent create/query tools
+      to `minimax-media`; verified through `mini ls minimax-media`
+- [ ] Add `minimax_voice_clone` custom fallback (official tool already covers it)
+- [ ] Extend `minimax_generate_video`: image-to-video (`first_frame_image`),
+      Hailuo-2.3 / Hailuo-2.3-Fast models, 768P/1080P validation
+- [ ] Image tool: add `width`/`height` custom dims (image-01 update),
+      `subject_reference` support
+- [ ] Music tool: keep but mark deprecated for new users (platform change
+      2026-08-20); fail with clear message if account lacks access
+- [ ] Smoke test each tool once (minimal cost): speech 1 short line, image 1
+      small, voices list (free), video only on explicit approval (expensive)
+- [ ] Verify all tools visible in BOTH Claude Desktop and Codex chat UIs via mini
+
+## Pass 4 — Harness: never silently break
+
+- [ ] `Test-MiniMaxStack.ps1` interactive harness (this repo):
+      checks services, ports, both gateways per-model, registry, catalog,
+      mini status, minimax-media handshake; `-Fix` restarts what's down
+- [ ] Wire harness as scheduled task (daily + on logon, silent, log to file)
+- [ ] Service recovery settings: restart on failure for both gateway services
+      (WinSW `onfailure` already set; verify with forced kill test)
+- [ ] `mini` startup resilience: startup_timeout_sec tuned; stale G:-path
+      registrations removed (minimax-media done; audit serena/unity entries)
+- [ ] Single source of truth for secrets: `C:\private\.env` +
+      `C:\private\.proxy-token` only; no G:/S: fallbacks in hot paths
+- [ ] Kill-test evidence: force-kill each gateway process → service auto-restarts
+      → endpoint answers within 30s
+
+## Pass 5 — Polish, docs, proof ledger
+
+- [ ] AGENTS.md updated with media tools, harness usage, catalog notes
+- [ ] Proof ledger table: every Pass 2–4 item with command + timestamp + result
+- [ ] Backup sync: mirror final scripts/configs to G:\Github\claude-codex-devin
+- [ ] Optional niceties: Codex profile files (`minimax.config.toml` as
+      `--profile minimax`), Claude picker label cleanup, output folder
+      `C:\Users\Admin\MiniMax-Generated` shortcut
 
 ---
 
-## Phase 3 — Proxy Wire-Protocol Expansion (DONE)
+## What is intentionally out of scope
 
-- [x] Add `/v1/responses` support to `claude-minimax-proxy.py` so Codex can switch to `wire_api = "responses"` without 404.
-- [ ] Map OpenAI Responses API fields (tools, reasoning, output format) to MiniMax chat or Anthropic messages.
-- [ ] Preserve streaming, tool-call id, and stop-reason fidelity.
+- Claude Desktop native image rendering of generated files (client limitation;
+  tools return local file paths)
+- Codex Desktop picker fixes that require patching the Electron bundle
+  (tracked upstream; workaround documented instead)
+- Music generation for new accounts (MiniMax discontinued the API 2026-08-20)
 
-**Acceptance criteria:**
+## Standing verification commands
 
-```bash
-codex --model MiniMax-M3 --provider minimax_gateway "explain this repo"
-# returns a streamed response with no 404 and no model errors
+```powershell
+# Full stack check
+powershell -ExecutionPolicy Bypass -File C:\Users\Admin\claude-codex-devin\Test-MiniMaxStack.ps1
+
+# Claude gateway per-tier
+#   claude-sonnet-4-5 -> MiniMax-M3, claude-opus-4-6 -> MiniMax-M2.7,
+#   claude-haiku-4-5 -> MiniMax-M2.7-highspeed
+# Codex effective model catalog
+& 'C:\Users\Admin\AppData\Local\OpenAI\Codex\bin\110b3d66a02d864e\codex.exe' debug models
+# MCP status
+& 'C:\Users\Admin\go\bin\mini.exe' status
 ```
-
----
-
-## Phase 4 — Multimodal Pipelines (NEXT)
-
-- [ ] Expose dedicated `model_providers` profiles in `~/.codex/config.toml` for:
-  - `image-01` image generation
-  - `speech-02-hd` / `speech-02-turbo` TTS
-  - `I2V-01` / `T2V-01` video generation
-  - `MiniMax-M3` vision via the `/v1/chat/completions` multimodal endpoint
-- [ ] Add `mcp_servers.minimax-media` or equivalent to surface media tools in Codex.
-- [ ] Document per-model payload shapes and upload flows.
-
----
-
-## Phase 5 — Hardening & Governance (NEXT)
-
-- [ ] Integrate `hp-mha-serena` runtime registration for the proxy so it is governed, hashed, and auto-restarting.
-- [ ] Add structured logging/telemetry to the proxy (request id, model, tokens, latency).
-- [ ] Implement token hot-reload without restart (`MINIMAX_PROXY_TOKEN_DISABLED` already supported for dev).
-- [ ] Add unit/regression tests for token validation, model rewriting, and upstream failover.
-
----
-
-## Phase 6 — GitOps & Release (DONE)
-
-- [x] Organize and commit Phase 0-2 changes to `Ghenghis/claude_desktop_minimax`.
-- [x] Push documentation and integration notes to `claude-codex-devin/docs/diagrams` and `portable/`.
-- [x] Build `G:\Github\claude-minimax-v2-portable.zip`.
-- [x] Tag `v2.0.0` release.
-- [x] Fix `minimax-media` MCP `transport closed` by registering `python.exe` + `server.py` directly in `managedMcpServers`.
-
----
-
-## Decision Log
-
-| Decision | Rationale |
-|----------|-----------|
-| `wire_api = "responses"` for Codex | Codex now requires the OpenAI Responses API. The proxy translates `POST /v1/responses` to `POST /v1/chat/completions` and back. |
-| `Authorization: Bearer` for proxy token | Both Claude Desktop and Codex can emit a bearer token; the proxy accepts all three header forms. |
-| `auth.command` reads `.proxy-token` | Avoids persisting the token inside `config.toml` and refreshes on each use. |
-| Forward slashes in `G:/private/.proxy-token` | Eliminates TOML and PowerShell backslash escaping issues in `config.toml`. |
-
----
-
-## Quick-Start for New Environments
-
-1. Run `scripts/Repair-MinimaxGateway.ps1` to create the token, set registry, and start the proxy.
-2. Open Claude Desktop and verify the third-party gateway option is selected.
-3. In Codex, run `codex --model MiniMax-M3 --provider minimax_gateway "hello"`.
-4. See `docs/E2E-Blueprint.md` for request flows and troubleshooting.

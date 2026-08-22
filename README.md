@@ -36,6 +36,51 @@ MiniMax keys are kept only in a private folder. The loader searches `C:\Private`
 
 They all point at `http://127.0.0.1:<port>/v1` and pass the MiniMax key as `Authorization: Bearer <token>`.
 
+## Current C: runtime (active)
+
+The supported runtime is pinned to `C:\Users\Admin\claude-codex-devin` so
+Claude and Codex do not depend on removable or unavailable `G:`/`S:` drives.
+
+| Client | Service | Endpoint |
+|---|---|---|
+| Claude Desktop | `claude-minimax-proxy` | `http://127.0.0.1:48217/anthropic` |
+| Codex Desktop | `api2codex-minimax` | `http://127.0.0.1:48218/v1` |
+| Both | `mini` MCP orchestrator | shared stdio connection |
+
+Claude aliases route truthfully: Sonnet → `MiniMax-M3`, Opus → `MiniMax-M2.7`,
+Haiku → `MiniMax-M2.7-highspeed`. Codex uses
+`C:\Users\Admin\.codex\model-catalogs\minimax-catalog.json` for the MiniMax
+model picker.
+
+Both clients receive the shared MiniMax MCP capability set through `mini`:
+
+- `minimax`: speech, voices, voice clone/design, playback, image, video, and video query
+- `minimax-media`: speech, image, video, music, file retrieval, and Video Agent task tools
+- `minimax-coding-plan`: `web_search` and `understand_image`
+- `touchpoint`: Windows UI Automation/CDP inspection and interaction
+- `winremote`: Windows inspection tools; Tier 2 and Tier 3 disabled by default
+- `Windows-MCP` and `daves-tools-harness`
+
+Generated media is stored at `C:\Users\Admin\MiniMax-Generated`.
+Run the repairable health check after boot or whenever a client reports a
+connection problem:
+
+```powershell
+powershell -ExecutionPolicy Bypass -NoProfile -File C:\Users\Admin\claude-codex-devin\Test-MiniMaxStack.ps1 -Fix
+```
+
+The harness checks both gateways, every Claude model tier, the Codex catalog,
+registry routing, MCP handshakes, and the Claude package-locking service.
+
+## Codex Desktop permissions
+
+Codex Desktop can expose `Bypass Permissions` / `Full access` for trusted local
+projects. Its UI state is stored in
+`C:\Users\Admin\.codex\.codex-global-state.json`. This mode removes local
+sandbox restrictions and approval prompts; it does not enable WinRemote Tier 3.
+Use it only for trusted workspaces. See `AGENTS.md` for the repair and the
+security trade-off.
+
 ## Quick start for Claude Desktop (one-touch)
 
 Make sure the sibling folders exist:
@@ -45,13 +90,15 @@ G:\Github\claude-codex-devin
 G:\Github\claude-minimax-v2
 ```
 
+For an always-connected Hermes workspace (survives `G:`/`S:` drive disconnects), copy or clone `claude-codex-devin` to `C:\Users\Admin\claude-codex-devin` and set `MCP_LOCK_WORKSPACE` to that path in your MCP config.
+
 Place the MiniMax API key in `S:\private\minimax_key.txt` (plain text, one line) for fastest access. The loader falls back to `G:\private\minimax_key.txt`, then `MINIMAX_API_KEY` in `S:\private\.env` or `G:\private\.env`.
 
 Then run:
 
 ```powershell
 # Start the gateway and wire the registry
-G:\Github\claude-codex-devin\Start-ClaudeMinimaxV2.ps1
+C:\Users\Admin\claude-codex-devin\Start-ClaudeMinimaxV2.ps1
 
 # Restart Claude Desktop when the script says so.
 ```
@@ -80,13 +127,22 @@ Run `Fix-RealGaps.ps1` to close the known unconfigured items (OpenHands bridge, 
 G:\Github\claude-codex-devin\Fix-RealGaps.ps1
 ```
 
+`Fix-RealGaps.ps1` now defaults to the always-connected `C:\Users\Admin\claude-codex-devin` Hermes workspace and creates a populated `provider_registry.json`.
+
 See `docs/REAL-GAPS.md` for the full audit.
 
-If you need the GitLab token for `glab`, run `Set-GitLabToken.ps1` with your token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt`.
+If you need the GitLab token for `glab` / Hermes, run `Set-GitLabToken.ps1` with your token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt`.
 
 ## Windsurf / Devin MCP support
 
-For Windsurf or Devin, run:
+The live Windsurf MCP config is at `C:\Users\Admin\.codeium\windsurf\mcp_config.json`:
+
+- `hermes3d-locks` env points to `C:\Users\Admin\claude-codex-devin` (always-connected workspace)
+- `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL` enable the Hermes Agent bridge
+- `HERMES_PROVIDER_REGISTRY` points to `C:\Users\Admin\claude-codex-devin\.hermes3d_orchestrator\provider_registry.json`
+- `GITLAB_TOKEN` / `GLAB_TOKEN` are loaded from `S:\private\glab_token.txt`
+
+For initial Windsurf setup, run:
 
 ```powershell
 G:\Github\claude-codex-devin\windsurf\Install-WindsurfMcpConfig.ps1

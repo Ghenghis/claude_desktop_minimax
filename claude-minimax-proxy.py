@@ -20,6 +20,7 @@ Configure Claude Desktop with:
 
 import json
 import os
+import re
 import secrets
 import sys
 import time
@@ -275,6 +276,30 @@ def chain_for(picker_model):
     picker slot has no explicit chain (backward compat).
     """
     return MODEL_CHAINS.get(picker_model, [pick_minimax_model(picker_model)])
+
+
+def _strip_thinking(text):
+    """Remove <thinking>/<think> reasoning blocks from model output."""
+    if not text or not isinstance(text, str):
+        return text
+    text = re.sub(r'<(thinking|think)\b[^>]*>.*?</\1>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Codex/MiniMax sometimes emits a tool-calling noise section after this marker.
+    text = re.split(r'[\[\]<>]+minimax[\[\]<>]+', text, flags=re.IGNORECASE)[0]
+    text = re.sub(r'\bexec\s*\{.*?\}', '', text, flags=re.DOTALL)
+    return text.strip()
+
+
+def _extract_text(content):
+    """Return the text from a string, list of text-typed objects, or text dict."""
+    if content is None:
+        return ''
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return ' '.join(c.get('text', '') for c in content if isinstance(c, dict) and 'text' in c)
+    if isinstance(content, dict):
+        return content.get('text', '')
+    return ''
 
 
 # --- Proxy-token loading (security Gap 1) ---
@@ -845,7 +870,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         message = chat_resp.get('choices', [{}])[0].get('message', {})
-        text = message.get('content', '') or ''
+        text = _strip_thinking(message.get('content', '') or '')
         chat_usage = chat_resp.get('usage', {})
         usage = {
             'input_tokens': chat_usage.get('prompt_tokens', 0),
@@ -944,15 +969,19 @@ class Handler(BaseHTTPRequestHandler):
             messages = []
             for item in raw_input:
                 if isinstance(item, dict) and 'role' in item and 'content' in item:
-                    messages.append(item)
+                    role = item.get('role', 'user')
+                    content = _extract_text(item.get('content'))
+                    if not content:
+                        self._send_json(400, {'error': 'empty content'})
+                        return
+                    messages.append({'role': role, 'content': content})
                 elif isinstance(item, dict) and item.get('type') == 'message' and 'content' in item:
                     role = item.get('role', 'user')
-                    content = item.get('content')
-                    if isinstance(content, str):
-                        messages.append({'role': role, 'content': content})
-                    elif isinstance(content, list):
-                        text = ' '.join(c.get('text', '') for c in content if isinstance(c, dict) and 'text' in c)
-                        messages.append({'role': role, 'content': text})
+                    content = _extract_text(item.get('content'))
+                    if not content:
+                        self._send_json(400, {'error': 'empty content'})
+                        return
+                    messages.append({'role': role, 'content': content})
                 elif isinstance(item, dict) and 'text' in item:
                     messages.append({'role': 'user', 'content': item['text']})
                 else:
@@ -985,7 +1014,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         message = chat_resp.get('choices', [{}])[0].get('message', {})
-        text = message.get('content', '') or ''
+        text = _strip_thinking(message.get('content', '') or '')
         chat_usage = chat_resp.get('usage', {})
         usage = {
             'input_tokens': chat_usage.get('prompt_tokens', 0),
