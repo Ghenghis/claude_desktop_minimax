@@ -43,10 +43,13 @@ call; there are no periodic repair loops or automatic restarts in this harness.
   spawn programs. Only its own log directory is writable by its service SID.
 - Requests have explicit concurrency, body, response and time limits. Failure
   produces an error; it does not repair the machine or restart applications.
-- The native client asks before shell execution and file changes; managed MCP
-  wildcard `ask` rules require per-call approval, including in Code sessions. Windows-MCP
-  Process, PowerShell and Registry are absent. UI input is still powerful; never
-  use it to bypass approval or operate unrelated applications.
+- Normal tools follow the permission mode the user selects in Claude. The profile
+  does not force an approval on every edit or MCP call. Default mode still asks;
+  Accept edits and Bypass permissions retain their native behavior. MCP standing
+  approvals are available where the client supports them. Windows-MCP Process,
+  PowerShell and Registry remain absent; unsafe Playwright tools stay blocked.
+  Bypass permissions is not a sandbox: shell and UI actions can affect other apps.
+  The gateway's resource limits and disabled watchdogs are independent of this mode.
 
 Prefer WindowSetValue and WindowInvoke for supported accessible text fields and
 buttons. They resolve a unique named control inside the exact observed window,
@@ -89,6 +92,14 @@ Machine policy takes precedence over user policy and applies to this host. The
 audited MSIX app retained an older user configuration until HKLM was used. This
 is why changing a JSON file alone was not sufficient. Profiles with local paths
 are intended for this user; multi-user deployment needs per-user provisioning.
+
+If an older profile prompts on every write even in Bypass permissions, reapply
+`configure_claude.py --workspace <existing-projects-directory> --machine --apply`,
+then fully quit and reopen Claude normally after saving work. The migration
+removes the old bare Bash/Write/Edit/REPL/JavaScript `ask` overrides and six core
+MCP wildcard `ask` overrides, while preserving other rules and exact tool blocks.
+It never selects Bypass permissions for the user or auto-clicks pending prompts.
+See Anthropic's [managed permission rules](https://claude.com/docs/third-party/claude-desktop/configuration).
 
 Services are **manual start**, so after reboot start the gateway when you need
 Claude. There is intentionally no hidden logon task or recovery supervisor.

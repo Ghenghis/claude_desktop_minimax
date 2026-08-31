@@ -58,3 +58,11 @@ needs to know.
 **Why**: Real native tests exposed omitted static labels, skipped window enumeration with use_ui_tree=false, and focus refusal. Windows CI exposed a socket reset on overloaded rejection; bounded half-close/drain fixes it. Static labels and semantic controls now allow verification without forced focus.
 **Lesson**: Prefer exact named accessibility controls. Do not bypass focus restrictions or attach input queues. A metadata-only Snapshot is not proof of Windows input. Keep the expired GitLab credential private; the reviewed safety branch is published to the authorized GitHub repository with its original history preserved.
 **Status**: Core acceptance complete; optional editor bridges, Cowork VM, paid generation, fresh-host install and long-duration soak remain explicitly unverified. Never turn those limitations into automatic repair loops.
+
+## 2026-08-30 — Respect explicitly selected native permissions
+
+**Tried**: Investigated repeated Write prompts despite the user's Bypass permissions selection. Compared the actual machine policy with Anthropic's configuration reference.
+**Result**: Our bare builtin `ask` rules and MCP wildcard `ask` rules override native modes and standing approvals. The user explicitly authorized automatic approval. The generator now retires these old overrides, preserves other rules and exact blocks, and allows MCP standing grants. It does not choose a native mode or approve a pending call.
+**Why**: Gateway containment and preventing watchdog repairs do not require interrupting every user-requested file edit. Bypass remains powerful and is not an OS sandbox.
+**Lesson**: Keep resource/process limits separate from native task permissions. Never silently restore forced per-call prompts after this explicit user choice. Save work and reopen the client normally to reload the managed profile; do not kill an active coding task.
+**Status**: Applied with a local backup. Before/after checks confirmed exactly three policy values changed; credentials, connection/model fields, six server commands, client preferences and explicit tool blocks were preserved. A second preview is idempotent. The user was asked to save work and reopen Claude normally; no active session was terminated. Native behavior after that reload is not yet observed.

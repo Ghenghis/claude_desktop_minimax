@@ -71,7 +71,17 @@ Unrelated applications and Codex-owned tool processes were not mass-terminated.
 
 Services deliberately do not start after reboot. Start the needed gateway with
 `scripts/Gateway-Service.ps1 -Gateway Claude -Action Start`, then open Claude.
-The native client requests per-call approval; automatic approval is not needed.
+Normal tools follow the user's selected native permission mode. The 2026-08-30
+permission follow-up removes our earlier blanket `ask` overrides, which forced
+repeated prompts even in Bypass permissions. Exact tool blocks and gateway
+containment remain unchanged. Earlier native acceptance used per-call approval;
+those results do not establish behavior of a still-running session after migration.
+The follow-up was applied with a backup and verified to change only
+`builtinToolPolicy`, `managedMcpServers` approval entries, and
+`mcpPersistentAlwaysAllowEnabled`. Other registry values, client preferences,
+server commands and exact blocks were preserved; the second preview was
+idempotent. Reopening the native client is left to the user to avoid interrupting
+the active coding project. No post-reload native approval result is claimed.
 
 The SSH alias currently uses root. Use a restricted deployment account for routine
 unattended work; this task did not create accounts or change remote permissions.

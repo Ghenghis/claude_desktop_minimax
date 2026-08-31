@@ -11,9 +11,11 @@ describe earlier builds; they do not authorize restoring retired behavior.
 - Never stop CoworkVMService, Codex, ChatGPT, editors, browsers, or another
   project's process to repair this adapter. An explicit gateway stop affects
   only the two service identities verified by scripts/Gateway-Service.ps1.
-- Do not modify permission modes to bypass native approvals. Shell and file
-  writes use Claude's task permissions. Windows UI tools do not expose Process,
-  PowerShell or Registry; UI access is still powerful and requires care.
+- Respect the permission mode the user selects; do not switch it autonomously or
+  auto-click approvals. The user explicitly requested removal of this profile's
+  blanket ask overrides on 2026-08-30. Do not restore them on normal coding tools.
+  Preserve unrelated permission rules and exact tool blocks. Windows UI tools do
+  not expose Process, PowerShell or Registry; UI access still requires care.
 - Authenticate before forwarding. Local tokens and upstream API keys are
   different secrets. No placeholder credentials, token-disable escape hatches,
   retry of billed POSTs, or caching tool-call responses.

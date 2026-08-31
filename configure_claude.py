@@ -57,9 +57,10 @@ def core_servers(workspace, node):
     for name, command, args in entries:
         if not Path(command).is_file() or not Path(args[0]).is_file():
             raise ValueError(f"Missing installed executable/script for {name}")
-        # Exact blocked tools are not available to the model. Other tools retain
-        # native task-scoped approval. Do not default to wildcard allow.
-        policy = {"*": "ask"}
+        # Leave normal tools under the user's native session permission mode.
+        # Managed wildcard ask overrides even an explicitly selected bypass mode.
+        # Retain exact blocks; do not replace the override with wildcard allow.
+        policy = {}
         if name == "Windows-MCP":
             policy.update({"PowerShell": "blocked", "Process": "blocked", "Registry": "blocked"})
         if name == "playwright":
@@ -75,6 +76,37 @@ def core_servers(workspace, node):
             }
         )
     return result
+
+
+def read_policy_json(hive, policy_path, name, default):
+    try:
+        with winreg.OpenKey(hive, policy_path) as key:
+            value = winreg.QueryValueEx(key, name)[0]
+    except FileNotFoundError:
+        return default
+    parsed = json.loads(value)
+    if not isinstance(parsed, type(default)):
+        raise ValueError(f"Invalid existing {name}; no changes made")
+    return parsed
+
+
+def preserve_permission_rules(hive, policy_path, servers):
+    """Retire only the blanket asks installed by the earlier safety profile."""
+    builtin = read_policy_json(hive, policy_path, "builtinToolPolicy", {})
+    for name in ("Bash", "Write", "Edit", "REPL", "JavaScript"):
+        if builtin.get(name) == "ask":
+            del builtin[name]
+    existing = read_policy_json(hive, policy_path, "managedMcpServers", [])
+    for server in servers:
+        matches = [entry for entry in existing if entry.get("name") == server["name"]]
+        if len(matches) > 1:
+            raise ValueError(f"Duplicate managed MCP server: {server['name']}")
+        rules = dict(matches[0].get("toolPolicy", {})) if matches else {}
+        if rules.get("*") == "ask":
+            del rules["*"]
+        rules.update(server["toolPolicy"])
+        server["toolPolicy"] = rules
+    return builtin
 
 
 def main():
@@ -99,6 +131,8 @@ def main():
                 raise ValueError("Machine policy is present; per-user changes would be ignored. No changes made.")
     except FileNotFoundError:
         pass
+    hive = winreg.HKEY_LOCAL_MACHINE if options.machine else winreg.HKEY_CURRENT_USER
+    builtin = preserve_permission_rules(hive, policy_path, servers)
     print(json.dumps({"workspace": str(workspace), "servers": [s["name"] for s in servers], "apply": options.apply}))
     if not options.apply:
         return
@@ -110,16 +144,13 @@ def main():
     backup.mkdir(parents=True)
     if config.exists():
         shutil.copy2(config, backup / config.name)
-    hive = winreg.HKEY_LOCAL_MACHINE if options.machine else winreg.HKEY_CURRENT_USER
     desired = {
         "managedMcpServers": json.dumps(servers),
-        "mcpPersistentAlwaysAllowEnabled": "false",
+        "mcpPersistentAlwaysAllowEnabled": "true",
         "mcpToolTimeoutSec": "180",
         "toolSearchEnabled": "false",
         "autoModeEnabled": "false",
-        "builtinToolPolicy": json.dumps(
-            {"Bash": "ask", "Write": "ask", "Edit": "ask", "REPL": "ask", "JavaScript": "ask"}
-        ),
+        "builtinToolPolicy": json.dumps(builtin),
     }
     if options.machine:
         # Machine policy replaces, rather than merges, user policy. Copy only
