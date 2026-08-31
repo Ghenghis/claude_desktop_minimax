@@ -13,11 +13,18 @@ htmlcov/
 .venv/
 venv/
 env/
+venvs/
+node_modules/
+acceptance-results/
+dist/
+*.zip
 
 # Local agent / client state
 .claude/settings.json
 .codex/
-.serena/
+.serena/*
+!.serena/project.yml
+!.serena/project.local.yml
 .kilo/
 
 # HermesProof orchestrator state (ephemeral; don't commit)
@@ -34,6 +41,7 @@ G:\private\*
 # Generated media, logs, and temporary artifacts
 MiniMax-Generated/
 AICE_DATA/
+logs/
 *.log
 *.tmp
 *.bak
@@ -41,6 +49,10 @@ AICE_DATA/
 .port
 proxy.err
 proxy.out
+minimax-mcp-server/mcp-*.txt
+api2codex-service.exe
+claude-minimax-proxy-service.exe
+litellm-service.exe
 
 # Editor / OS noise
 .vscode/

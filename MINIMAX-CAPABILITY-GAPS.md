@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # MiniMax Capability Gap Audit
 
 ## What MiniMax provides

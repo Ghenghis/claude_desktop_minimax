@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # Admin Gateway — Current Features
 
 **Scope:** the local third-party inference gateway in `G:\Github\claude-codex-devin` that lets Claude Desktop talk to MiniMax via the Anthropic-compatible API. The implementation is intentionally minimal: one ~270-line stdlib-only Python proxy and a small set of PowerShell scripts that wire registry keys, load a secret from a local `.env`, and run a watchdog.

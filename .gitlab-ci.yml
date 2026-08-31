@@ -1,0 +1,16 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+stages: [test]
+offline-contracts:
+  image: python:3.14-slim
+  stage: test
+  script:
+    - python -m pip install -r requirements-test.txt
+    - python scripts/verify.py
+    - python -m unittest discover -s tests -v
+schema-compatibility:
+  image: node:22-slim
+  stage: test
+  script:
+    - node --test tests/schema-compat.test.mjs

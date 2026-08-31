@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # Claude Desktop ↔ MiniMax and Codex ↔ MiniMax Gateway E2E Blueprint
 
 ## 1. Purpose

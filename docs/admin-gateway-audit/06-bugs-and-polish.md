@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # Admin Gateway — Bug Audit & Polish List (Aug 2026)
 
 **Scope:** Every file in `G:\Github\claude-codex-devin` that ships with the Admin Gateway (Python proxy + 11 PowerShell scripts). Issues are grouped by severity. The 31 items below extend the existing "Known limitations" section in `01-current-features.md` with concrete file:line citations and one-line fixes.

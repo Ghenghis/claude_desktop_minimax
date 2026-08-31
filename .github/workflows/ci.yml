@@ -1,87 +1,26 @@
-name: CI
-
+name: Offline contracts
 on:
   pull_request:
   push:
-    branches: [main]
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
-  test:
-    name: test (windows, python ${{ matrix.python }})
-    runs-on: windows-latest
+  contracts:
     strategy:
-      fail-fast: false
       matrix:
-        python: ['3.10', '3.11', '3.12']
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-          cache: pip
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run unit tests (no network)
-        run: python tests/test_proxy_e2e.py
-
-      - name: Run pre-commit on all files
-        run: pre-commit run --all-files
-
-      - name: PowerShell lint
-        shell: pwsh
-        run: |
-          if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-            Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
-          }
-          Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
-
-      - name: Verify proxy parses
-        run: python -m py_compile claude-minimax-proxy.py
-
-  # Optional: nightly live smoke. Opt-in via GitHub secret MINIMAX_API_KEY_TEST.
-  # If the secret is missing, this job is skipped.
-  nightly-smoke:
-    name: live-smoke (windows, opt-in)
-    runs-on: windows-latest
-    needs: test
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        os: [windows-latest, ubuntu-latest]
+        python: ['3.11', '3.14']
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Live MiniMax smoke (requires MINIMAX_API_KEY_TEST secret)
-        env:
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY_TEST }}
-        run: |
-          if (-not $env:MINIMAX_API_KEY) {
-            Write-Host "MINIMAX_API_KEY_TEST not set; skipping live smoke"
-            exit 0
-          }
-          python claude-minimax-proxy.py &
-          Start-Sleep 5
-          python -c "import urllib.request, json; r = urllib.request.urlopen('http://127.0.0.1:48217/v1/models', timeout=5); print(json.loads(r.read()))"
-
-  # Auto-open issue on nightly failure.
-  open-issue-on-failure:
-    name: open-issue-on-nightly-failure
-    runs-on: ubuntu-latest
-    needs: nightly-smoke
-    if: failure() && github.event_name == 'schedule'
-    permissions:
-      issues: write
-    steps:
-      - uses: actions/github-script@v7
         with:
-          script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'nightly Admin Gateway smoke failed',
-              body: `run ${{ github.run_id }} — nightly live-smoke job failed.`,
-              labels: ['nightly-failure', 'bug']
-            })
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements-test.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/verify.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/schema-compat.test.mjs

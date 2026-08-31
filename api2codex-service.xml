@@ -1,0 +1,3 @@
+<!-- Retired template: the old PowerShell start wrapper caused recursive service starts.
+     Use the explicit installer, which launches only the isolated Python executable. -->
+<retired>Run scripts/Install-RequestGateways.ps1; no service definition here.</retired>

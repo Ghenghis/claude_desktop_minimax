@@ -1,41 +1,35 @@
-# Security Policy
+# Security and operational limits
 
-## Supported versions
+Report security defects privately to the repository owner. Do not include API
+keys, registry exports, user conversations or private project files in reports.
 
-The `main` branch only. Older commits are not security-supported.
+The HTTP adapters have no tool execution authority. They use authenticated
+loopback listeners, fixed upstream destinations, bounded request sizes,
+concurrency and duration, and do not retry billed requests. On Windows deployment
+adds separate non-administrator service identities, restricted write access and
+job-object CPU/memory/child-process limits. The limits are fail-closed at startup.
 
-## Reporting a vulnerability
+The client and MCP tools are a different trust boundary. Native approvals must
+remain enabled. An MCP that reads files, a browser with network access, a shell,
+or Windows clicking and typing can expose or change data when used. Folder
+allowlists are not shell sandboxes. UI commands must never be used to bypass
+security prompts. Root SSH is not a safe default for unattended deployments.
 
-Open a **private** GitHub security advisory at
-`https://github.com/<owner>/claude-codex-devin/security/advisories/new`.
-Do **not** open a public issue for a vulnerability.
+No service, timer, watchdog or health script may stop unrelated processes,
+restart an application, change its permissions, or “repair” the whole machine.
+Owned service shutdown is an explicit maintenance operation only and interrupts
+that service's in-flight requests. No automatic recovery is configured.
 
-Initial response within **14 days**.
+Dependencies are pinned in separate environments. A clean vulnerability scan
+does not prove absence of malicious behavior or undiscovered vulnerabilities.
+Python pins are version locks, not wheel hashes; WinSW and Node integrity hashes
+are verified. Review dependency upgrades before applying them.
 
-## Scope
+Secrets remain outside the repository. The gateway receives only its MiniMax
+key and local token, not the user's entire secret file. Backups containing
+configuration secrets stay local and must not be published. Do not use ACL deny
+rules against Everyone: they can also deny the administrator access.
 
-This proxy holds a live MiniMax API key in process memory and reads it from
-`G:\private\.env`. Report anything that could:
-
-- Expose the MiniMax API key (in logs, error messages, registry values, or HTTP responses)
-- Allow a non-loopback client to reach the proxy
-- Bypass the shared-secret `X-Proxy-Token` client auth
-- Bypass the multimodal model allowlist (allow `MiniMax-M3-experimental` etc.)
-- Exfiltrate `.env` content to any caller
-
-## Out of scope
-
-- MiniMax API vulnerabilities (report upstream to MiniMax)
-- Attacks requiring Administrator on the host
-- Claude Desktop's own permission-mode toggle bug (#61304) — tracked upstream
-
-## Threat model
-
-See [`docs/threat-model.md`](docs/threat-model.md) for the full STRIDE analysis.
-
-## Hardening utilities
-
-- `scripts/Generate-ProxyToken.ps1` — generate the shared-secret token
-- `Harden-MinimaxEnv.ps1` — set restrictive ACL on `G:\private\.env`
-- `Fix-ClaudePermissions.ps1` — work around Claude Desktop broken toggle
-- `.claude/verifiers/run.sh` — pre-commit quality gate
+Stock Claude and upstream MCPs are not rewritten here. Browser/CDP, media API,
+WSL and editor-specific capabilities require their own task-scoped testing.
+There is no claim of complete Claude feature parity or absence of all leaks.

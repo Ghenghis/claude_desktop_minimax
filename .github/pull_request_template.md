@@ -1,28 +1,18 @@
-## What changed
+## Problem and change
 
-<!-- One sentence. -->
-
-## Why
+Explain the user-visible problem, the change, and the resulting behavior.
 
 ## Verification
 
-- [ ] `python tests/test_proxy_e2e.py` passes (paste the count)
-- [ ] `pre-commit run --all-files` passes
-- [ ] Started the proxy and made one real request (if behavior change)
+- [ ] Offline Python contracts, source verifier, and Node schema tests pass.
+- [ ] Affected native-client workflows have observed results, not just handshakes.
+- [ ] Failure, cancellation, overload and resource limits remain bounded.
+- [ ] No secrets, private logs, environments, or unrelated edits are published.
+- [ ] Documentation and release-manifest.json reflect the reviewed files.
 
-## Risk
+## Safety and limitations
 
-- [ ] Touches auth, network binding, or logging → **re-review `docs/threat-model.md`**
-- [ ] Touches `MODEL_MAP`, `MODEL_CHAINS`, or model allowlist → **add a smoke test**
-- [ ] No secrets, keys, or `G:\private\*` contents in this diff
-
-## Docs
-
-- [ ] `CHANGELOG.md` updated under `[Unreleased]`
-- [ ] New architectural decision → added an ADR under `docs/adr/`
-- [ ] Skill added or changed → updated `.harness/HARNESS.md`
-
-## For non-trivial changes
-
-- [ ] `Test-ClaudeMiniMaxSetup.ps1` runs cleanly against a real MiniMax key
-- [ ] `Watch-ClaudeMiniMaxProxy.ps1` is still happy (proxy stays up, `/readyz` returns 200)
+State what was not tested and any migration risks. Preserve native approvals.
+Never restore watchdogs, automatic repairs, scheduled health checks, process-name
+kills, port-owner kills, blanket permission changes, or billed-request retries.
+Watch-ClaudeMiniMaxProxy.ps1 and Test-MiniMaxStack.ps1 are retired no-ops, not tests.

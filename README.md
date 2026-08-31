@@ -1,152 +1,143 @@
-# MiniMax setup for Claude Desktop, Codex Desktop, and Devin/Windsurf (Windows)
+# Claude Desktop with MiniMax — safety repair candidate
 
-MiniMax keys are kept only in a private folder. The loader searches `C:\Private`, `G:\Private`, `S:\Private` and uses the first one it finds.
+This project configures the **stock Claude Desktop** application and supplies a
+small request-driven MiniMax HTTP adapter. Claude owns its editor sessions,
+permissions, terminal and tool execution. The adapter never executes tools.
 
-## Files created in the private folder
-- `minimax_key.txt` — MiniMax token for Claude Desktop (Anthropic-compatible)
-- `minimax_api_key.txt` — MiniMax API key for Codex (OpenAI-compatible)
+Use the repaired native-client integration, not Grok's replacement website or
+either old watchdog harness. See [the review](docs/SAFETY_REVIEW.md) and
+[the repeatable acceptance test](docs/CLAUDE_ACCEPTANCE.md).
+The [validation record](docs/RELEASE_VALIDATION.md) separates observed passes
+from untested workflows and documents the safety refusals found during testing.
 
-## Detailed docs
+## What is included
 
-- `docs/Claude-Desktop-MiniMax.md` — Claude Desktop + MiniMax M3 setup (working)
-- `docs/Codex-Desktop-MiniMax.md` — paid plan + MiniMax backup profile
-- `docs/Devin-Windsurf-MiniMax.md` — current support status
-
-## Current status
-
-1. **Claude Desktop** — working via the `claude-minimax-v2` Anthropic-compatible gateway.
-   - The gateway (`claude-minimax-v2/gateway/`) accepts Anthropic Messages API calls, maps Claude-family aliases to MiniMax models, and forwards to `https://api.minimax.io/anthropic/v1/messages`.
-   - Registry: `HKCU:\SOFTWARE\Policies\Claude` with `inferenceGatewayBaseUrl = http://127.0.0.1:<port>/anthropic`.
-   - The actual `<port>` is auto-discovered (defaults to `48217`, falls back to a free OS port) and written to `claude-minimax-v2/.port`.
-   - `inferenceModels` uses Claude-style IDs (`claude-sonnet-4-5`, etc.) with `labelOverride` so the picker displays `MiniMax M3`, `MiniMax M2.7`, etc.  This is required because Claude Desktop rejects non-Anthropic model names.
-
-2. **ChatGPT Codex** — working via the OpenAI Responses API.
-   - `~/.codex/config.toml` uses `model = "MiniMax-M3"`, `model_provider = "minimax_gateway"`, and `wire_api = "responses"`.
-   - The `claude-minimax-proxy.py` legacy proxy translates `POST /v1/responses` to `POST /v1/chat/completions` and back.
-
-3. **Devin / Windsurf** — no guaranteed native way to redirect Cascade to a custom OpenAI-compatible endpoint. See `docs/Devin-Windsurf-MiniMax.md` for ACP/Roo Code alternatives.
-
-### Other clients that work with this gateway
-
-| Client | Override location |
+| Capability | Implementation |
 |---|---|
-| **Continue.dev** | `~/.continue/config.json` `apiBase` |
-| **Cline** | VS Code settings `cline.modelSettings.*.apiUrl` |
-| **Kilo Code** | `openai.baseUrl` in settings |
+| Windows UI | Windows-MCP 0.8.5: Snapshot, Screenshot, InspectWindow, WindowSetValue, WindowInvoke, WindowClick, WindowType, WindowScroll, WindowMove, WindowShortcut, Wait, WaitFor |
+| Project files | Official filesystem MCP 2026.7.10, explicit workspace root, reviewed schema compatibility adapter |
+| Browser automation | Playwright MCP 0.0.79, isolated headless Edge profile |
+| Library documentation | Context7 4.0.4 |
+| Search and image understanding | MiniMax coding-plan MCP 0.0.5 |
+| Voice/image/video API tools | Official MiniMax MCP 0.0.19 |
+| Windows/Linux coding and VPS | Claude's native terminal, installed Python/Git/WSL/OpenSSH; existing SSH aliases |
 
-They all point at `http://127.0.0.1:<port>/v1` and pass the MiniMax key as `Authorization: Bearer <token>`.
+SSH does not require another unrestricted shell MCP. The existing `daveai` alias
+authenticates as root: use task approval, read-only checks first, and a restricted
+deployment account for routine VPS work. No remote account changes are made here.
+Unity and other editor-specific bridges are optional project integrations, not
+silently started services. Their saved configuration is preserved in backups.
 
-## Current C: runtime (active)
+The six MCP processes may stay connected while Claude is open. Tool calls are
+task-driven. “No watchdog” does not mean every MCP must be relaunched for every
+call; there are no periodic repair loops or automatic restarts in this harness.
 
-The supported runtime is pinned to `C:\Users\Admin\claude-codex-devin` so
-Claude and Codex do not depend on removable or unavailable `G:`/`S:` drives.
+## Safety boundaries
 
-| Client | Service | Endpoint |
-|---|---|---|
-| Claude Desktop | `claude-minimax-proxy` | `http://127.0.0.1:48217/anthropic` |
-| Codex Desktop | `api2codex-minimax` | `http://127.0.0.1:48218/v1` |
-| Both | `mini` MCP orchestrator | shared stdio connection |
+- No scheduled health checks, watchdogs, automatic repairs or service recovery.
+- No process-name, PID-file, port-owner or unrelated application termination.
+- Gateways authenticate locally and bind loopback only. No billed POST retries,
+  tool-response cache, placeholder tokens, ambient HTTP proxy or redirects.
+- On Windows each gateway has a separate restricted virtual service account,
+  256 MiB process memory limit, 20% CPU limit and one-process limit. It cannot
+  spawn programs. Only its own log directory is writable by its service SID.
+- Requests have explicit concurrency, body, response and time limits. Failure
+  produces an error; it does not repair the machine or restart applications.
+- Normal tools follow the permission mode the user selects in Claude. The profile
+  does not force an approval on every edit or MCP call. Default mode still asks;
+  Accept edits and Bypass permissions retain their native behavior. MCP standing
+  approvals are available where the client supports them. Windows-MCP Process,
+  PowerShell and Registry remain absent; unsafe Playwright tools stay blocked.
+  Bypass permissions is not a sandbox: shell and UI actions can affect other apps.
+  The gateway's resource limits and disabled watchdogs are independent of this mode.
 
-Claude aliases route truthfully: Sonnet → `MiniMax-M3`, Opus → `MiniMax-M2.7`,
-Haiku → `MiniMax-M2.7-highspeed`. Codex uses
-`C:\Users\Admin\.codex\model-catalogs\minimax-catalog.json` for the MiniMax
-model picker.
+Prefer WindowSetValue and WindowInvoke for supported accessible text fields and
+buttons. They resolve a unique named control inside the exact observed window,
+without global keystrokes or focus changes. Coordinate input fails when Windows
+refuses focus or the point is covered; there is no force-focus workaround.
 
-Both clients receive the shared MiniMax MCP capability set through `mini`:
+Filesystem roots constrain that MCP only. They do not sandbox Claude's terminal,
+Windows UI, or every third-party media tool. No unrestricted coding assistant
+can honestly promise that arbitrary approved commands are harmless.
 
-- `minimax`: speech, voices, voice clone/design, playback, image, video, and video query
-- `minimax-media`: speech, image, video, music, file retrieval, and Video Agent task tools
-- `minimax-coding-plan`: `web_search` and `understand_image`
-- `touchpoint`: Windows UI Automation/CDP inspection and interaction
-- `winremote`: Windows inspection tools; Tier 2 and Tier 3 disabled by default
-- `Windows-MCP` and `daves-tools-harness`
+## Installation and explicit lifecycle (Windows)
 
-Generated media is stored at `C:\Users\Admin\MiniMax-Generated`.
-Run the repairable health check after boot or whenever a client reports a
-connection problem:
+Prerequisites: stock third-party Claude Desktop, Python 3.14 on this tested host,
+Node.js 22 with npm, PowerShell 7, Edge, and administrator access for service setup.
+The Python adapter also has offline CI coverage configured for 3.11 and Linux;
+Windows MCP and this installer are Windows-only.
 
-```powershell
-powershell -ExecutionPolicy Bypass -NoProfile -File C:\Users\Admin\claude-codex-devin\Test-MiniMaxStack.ps1 -Fix
-```
+1. Keep source in a trusted local directory. Put `MINIMAX_API_KEY=...` in
+   `C:\private\.env`; do not paste a secret into the repository or chat.
+2. On an older installation, explicitly run `./scripts/Disable-MinimaxWatchdogs.ps1`
+   to back up and disable the recognized legacy tasks. It does not kill processes.
+   Run `./Harden-MinimaxEnv.ps1` and `./scripts/Generate-ProxyToken.ps1` explicitly
+   in PowerShell 7. Existing local tokens are preserved unless `-Rotate` is used.
+3. Run `./scripts/Install-Dependencies.ps1`. Dependencies are pinned, isolated,
+   and downloaded only at this explicit step, not when a client connects.
+4. Run `./scripts/Install-RequestGateways.ps1 -DownloadWinSW` as administrator.
+   On a running installation first close active requests; use `-Activate` only
+   for an intentional gateway deployment/restart. WinSW 2.12.0 is SHA256 checked.
+5. Run `./Set-ClaudeDesktopGateway.ps1`, then
+   `python configure_claude.py --workspace C:\Users\Admin\projects --machine --apply`.
+   Substitute your intended, existing projects directory. Configuration changes
+   are backed up and never stop applications. Existing model choices are kept.
+6. Start the needed gateway explicitly with
+   `./scripts/Gateway-Service.ps1 -Gateway Claude -Action Start`.
+   Use `-Gateway Codex` only if the Responses adapter is needed.
+7. Fully quit and reopen Claude normally. Verify all six servers in the actual
+   client, then run the acceptance checks below. Do not force-kill the client.
 
-The harness checks both gateways, every Claude model tier, the Codex catalog,
-registry routing, MCP handshakes, and the Claude package-locking service.
+Machine policy takes precedence over user policy and applies to this host. The
+audited MSIX app retained an older user configuration until HKLM was used. This
+is why changing a JSON file alone was not sufficient. Profiles with local paths
+are intended for this user; multi-user deployment needs per-user provisioning.
 
-## Codex Desktop permissions
+If an older profile prompts on every write even in Bypass permissions, reapply
+`configure_claude.py --workspace <existing-projects-directory> --machine --apply`,
+then fully quit and reopen Claude normally after saving work. The migration
+removes the old bare Bash/Write/Edit/REPL/JavaScript `ask` overrides and six core
+MCP wildcard `ask` overrides, while preserving other rules and exact tool blocks.
+It never selects Bypass permissions for the user or auto-clicks pending prompts.
+See Anthropic's [managed permission rules](https://claude.com/docs/third-party/claude-desktop/configuration).
 
-Codex Desktop can expose `Bypass Permissions` / `Full access` for trusted local
-projects. Its UI state is stored in
-`C:\Users\Admin\.codex\.codex-global-state.json`. This mode removes local
-sandbox restrictions and approval prompts; it does not enable WinRemote Tier 3.
-Use it only for trusted workspaces. See `AGENTS.md` for the repair and the
-security trade-off.
+Services are **manual start**, so after reboot start the gateway when you need
+Claude. There is intentionally no hidden logon task or recovery supervisor.
 
-## Quick start for Claude Desktop (one-touch)
-
-Make sure the sibling folders exist:
-
-```text
-G:\Github\claude-codex-devin
-G:\Github\claude-minimax-v2
-```
-
-For an always-connected Hermes workspace (survives `G:`/`S:` drive disconnects), copy or clone `claude-codex-devin` to `C:\Users\Admin\claude-codex-devin` and set `MCP_LOCK_WORKSPACE` to that path in your MCP config.
-
-Place the MiniMax API key in `S:\private\minimax_key.txt` (plain text, one line) for fastest access. The loader falls back to `G:\private\minimax_key.txt`, then `MINIMAX_API_KEY` in `S:\private\.env` or `G:\private\.env`.
-
-Then run:
-
-```powershell
-# Start the gateway and wire the registry
-C:\Users\Admin\claude-codex-devin\Start-ClaudeMinimaxV2.ps1
-
-# Restart Claude Desktop when the script says so.
-```
-
-To stop the gateway later, run `Stop-MinimaxGateway.ps1`.
-
-If anything feels off, the idempotent `Repair-ClaudeMinimaxV2.ps1` stops the gateway, validates Python compiles, and restarts/wires everything.
-
-See `docs/E2E-Blueprint.md` for request flows, `docs/Claude-Desktop-MiniMax.md` for the model-picker details, and `docs/Codex-Setup-Audit.md` for historical fixes.
-
-## Portable Windows 11 install (Phase 5)
-
-For a clean Windows 11 PC:
-
-1. Build: `G:\Github\claude-codex-devin\portable\Build-PortableZip.ps1`
-2. Distribute: `G:\Github\claude-minimax-v2-portable.zip`
-3. On the target PC, extract the zip, place the key in `S:\private\minimax_key.txt` (or `G:\private` or `C:\private`), and double-click `start-here.bat`.
-
-See `docs/diagrams/Portability.md` for the bundle layout and `docs/diagrams/MCP-Gap.md` for the media MCP wiring.
-
-## Real gaps / release hardening
-
-Run `Fix-RealGaps.ps1` to close the known unconfigured items (OpenHands bridge, provider registry, browser launch target, `glab` install, etc.):
-
-```powershell
-G:\Github\claude-codex-devin\Fix-RealGaps.ps1
-```
-
-`Fix-RealGaps.ps1` now defaults to the always-connected `C:\Users\Admin\claude-codex-devin` Hermes workspace and creates a populated `provider_registry.json`.
-
-See `docs/REAL-GAPS.md` for the full audit.
-
-If you need the GitLab token for `glab` / Hermes, run `Set-GitLabToken.ps1` with your token in `S:\private\glab_token.txt` or `G:\private\glab_token.txt`.
-
-## Windsurf / Devin MCP support
-
-The live Windsurf MCP config is at `C:\Users\Admin\.codeium\windsurf\mcp_config.json`:
-
-- `hermes3d-locks` env points to `C:\Users\Admin\claude-codex-devin` (always-connected workspace)
-- `HERMES_AGENT_ENABLED=1` and `OPENHANDS_URL` enable the Hermes Agent bridge
-- `HERMES_PROVIDER_REGISTRY` points to `C:\Users\Admin\claude-codex-devin\.hermes3d_orchestrator\provider_registry.json`
-- `GITLAB_TOKEN` / `GLAB_TOKEN` are loaded from `S:\private\glab_token.txt`
-
-For initial Windsurf setup, run:
+## Testing
 
 ```powershell
-G:\Github\claude-codex-devin\windsurf\Install-WindsurfMcpConfig.ps1
+./venvs/test/Scripts/python.exe scripts/verify.py
+./venvs/test/Scripts/python.exe -m unittest discover -s tests -v
+node --test tests/schema-compat.test.mjs
+./venvs/test/Scripts/python.exe scripts/Test-ClaudeTools.py --live --ssh-alias daveai
 ```
 
-This writes `minimax-media` into `C:\Users\<you>\mcp_config.json` with the correct `python.exe` and `server.py` paths, so the `transport closed` problem does not reappear.
+The final command runs once, sequentially, in a disposable workspace. `--live`
+allows public documentation/search/voice-list and synthetic image-understanding
+API calls that can consume quota. Each MCP request has a 120-second deadline;
+failures are recorded, not retried automatically.
+It prints an evidence JSON path. Omit `--live` for handshake-only checks of those
+three remote APIs. It never installs, repairs, changes host keys or kills apps.
 
+Give Claude [docs/CLAUDE_ACCEPTANCE.md](docs/CLAUDE_ACCEPTANCE.md) for a separate
+native-client test. A handshake is not proof of working file or Windows tools.
+Paid media generation, Cowork VM workflows and every user project remain
+separate acceptance tests; they are not marked verified by a voice-list call.
+
+## Scope and release status
+
+This is a repaired **release candidate**, not a zero-bug certification. The
+Responses adapter implements stateless text/function/custom-tool round trips,
+not every OpenAI server-side feature. Unsupported features fail explicitly.
+Token counting is an estimate, not an upstream tokenizer or billing promise.
+
+Windows-MCP 0.8.5's window inventory can omit non-maximizable dialogs. Use a
+fresh screenshot for those surfaces; absence from its window list alone is not
+proof that a window does not exist. The resizable test fixture avoids that
+upstream filtering behavior without altering or granting extra tool authority.
+
+Old audit documents are historical. Do not follow their watchdog, blanket
+permission-repair or aggregate-MCP instructions. Retired entry points fail closed.
+The source archive is not a self-contained installer and contains no secrets,
+Python environments, Node modules, service binaries or user conversations.

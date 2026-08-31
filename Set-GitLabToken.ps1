@@ -31,10 +31,9 @@ if (-not $token) {
     throw "No GitLab token found. Place it in S:\private\glab_token.txt or G:\private\glab_token.txt"
 }
 
-[Environment]::SetEnvironmentVariable('GITLAB_TOKEN', $token, 'User')
-[Environment]::SetEnvironmentVariable('GLAB_TOKEN', $token, 'User')
+# Explicit opt-in for this shell only; never inject credentials into future apps.
 $env:GITLAB_TOKEN = $token
 $env:GLAB_TOKEN = $token
 
 Write-Host "GitLab token set from $source" -ForegroundColor Green
-Write-Host "Restart your shell or IDE for all tools to pick it up." -ForegroundColor Cyan
+Write-Host "Available only to this shell and commands you explicitly start from it." -ForegroundColor Cyan
