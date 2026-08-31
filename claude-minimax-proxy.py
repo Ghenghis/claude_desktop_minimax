@@ -189,6 +189,19 @@ class BoundedHTTPServer(ThreadingHTTPServer):
             try:
                 request.settimeout(0.2)
                 request.sendall(b"HTTP/1.0 503 Service Unavailable\r\nContent-Length: 0\r\nRetry-After: 2\r\n\r\n")
+                # Windows can discard the response if close() resets a socket
+                # with unread request bytes. Half-close, then drain a bounded
+                # amount while the client receives the error. No extra worker,
+                # unbounded body allocation, replay, or sleeping accept loop.
+                request.shutdown(socket.SHUT_WR)
+                deadline = time.monotonic() + 0.05
+                remaining = 65536
+                while remaining and (wait := deadline - time.monotonic()) > 0:
+                    request.settimeout(wait)
+                    data = request.recv(min(8192, remaining))
+                    if not data:
+                        break
+                    remaining -= len(data)
             except OSError:
                 pass
             self.shutdown_request(request)

@@ -41,11 +41,13 @@ anything. Report blocked or failed steps honestly. Do not invent results.
 For a deliberate UI input test, explicitly launch
 `pwsh -NoProfile -File scripts/Start-WindowsTestFixture.ps1`.
 It creates one disposable WinForms window titled **Claude MCP test fixture**.
-Tell Claude to use Snapshot (use_vision=false, use_ui_tree=false), InspectWindow,
+Tell Claude to use Snapshot (use_vision=false, use_ui_tree=true), InspectWindow,
 WindowSetValue and WindowInvoke only in that window: set the uniquely named
 Acceptance input field to CLAUDE_WINDOWS_TEST_PASSED, invoke Verify test input,
 and use InspectWindow to observe the matching result label. Supply the exact
 observed window_handle, window_title and control_name for each action.
+The pinned upstream server skips window enumeration when use_ui_tree=false;
+that fast metadata-only call cannot locate the fixture.
 Never use the user's Notepad documents as a test surface. Stop if the fixture
 is not visible; never guess coordinates or substitute another application.
 InspectWindow takes the exact observed handle and title and reads only that

@@ -190,14 +190,23 @@ class ProxyContracts(unittest.TestCase):
         with running(server) as port:
             for _ in range(MAX_REQUESTS):
                 self.assertTrue(server.slots.acquire(False))
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
-            conn.request("GET", "/healthz")
-            response = conn.getresponse()
-            self.assertEqual(response.status, 503)
-            response.read()
-            conn.close()
-            for _ in range(MAX_REQUESTS):
-                server.slots.release()
+            try:
+                # Exercise the accept/read race on Windows, including a body
+                # that must not reset the connection before 503 is received.
+                for _ in range(25):
+                    for method, body in [("GET", None), ("POST", b"x" * 8192)]:
+                        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+                        try:
+                            conn.request(method, "/healthz", body=body)
+                            response = conn.getresponse()
+                            self.assertEqual(response.status, 503)
+                            response.read()
+                        finally:
+                            conn.close()
+            finally:
+                for _ in range(MAX_REQUESTS):
+                    server.slots.release()
+            self.assertFalse(FakeUpstream.requests)
 
 
 def decode_events(events):
