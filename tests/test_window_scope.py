@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 import unittest
-from mcp_windows import inspect_window, guarded_point, find_control
+from mcp_windows import inspect_window, guarded_point, find_control, read_window_labels
 
 
 class WindowScope(unittest.TestCase):
@@ -123,3 +123,23 @@ class WindowScope(unittest.TestCase):
         self.uia.WalkControl.return_value = [(self.control, 1)] + [(other, 1)] * 500
         with self.assertRaises(ValueError):
             self.resolve_control()
+
+    def test_visible_status_labels_are_read_without_mutating_the_window(self):
+        self.prepare_controls()
+        label = SimpleNamespace(ControlTypeName="TextControl", Name="Verification passed", IsOffscreen=False)
+        hidden = SimpleNamespace(ControlTypeName="TextControl", Name="Hidden", IsOffscreen=True)
+        self.uia.WalkControl.return_value = [(self.control, 1), (label, 1), (hidden, 1)]
+        self.assertEqual(read_window_labels(self.native, self.uia, 123, "Disposable fixture"), "Verification passed")
+        self.native.SetForegroundWindow.assert_not_called()
+
+    def test_label_search_reports_truncation_at_its_budget(self):
+        self.prepare_controls()
+        label = SimpleNamespace(ControlTypeName="TextControl", Name="Label", IsOffscreen=False)
+        self.uia.WalkControl.return_value = [(label, 1)] * 501
+        self.assertIn("truncated", read_window_labels(self.native, self.uia, 123, "Disposable fixture"))
+
+    def test_labels_from_a_changed_window_are_discarded(self):
+        self.prepare_controls()
+        self.native.GetWindowText.side_effect = ["Disposable fixture", "Other project"]
+        with self.assertRaises(ValueError):
+            read_window_labels(self.native, self.uia, 123, "Disposable fixture")

@@ -87,6 +87,27 @@ def find_control(native, uia, handle, title, name, kind):
     return control
 
 
+def read_window_labels(native, uia, handle, title):
+    """Include static status/error labels omitted by upstream's interactive tree."""
+    validate_window(native, handle, title)
+    root = uia.ControlFromHandle(handle)
+    labels = []
+    deadline = monotonic() + 5
+    for count, (control, _) in enumerate(uia.WalkControl(root, includeTop=False, maxDepth=12)):
+        if count >= 500 or monotonic() > deadline:
+            labels.append("[Static label listing truncated at the inspection budget]")
+            break
+        if control.ControlTypeName == "TextControl" and not control.IsOffscreen:
+            name = control.Name
+            if name:
+                labels.append(name[:1000])
+    validate_window(native, handle, title)
+    result = "\n".join(labels)
+    if len(result) > 100_000:
+        raise ValueError("Static label text exceeded the inspection limit")
+    return result
+
+
 def register_window_inspection(server, get_desktop):
     import win32gui
 
@@ -100,7 +121,15 @@ def register_window_inspection(server, get_desktop):
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     )
     def inspect(window_handle: int, window_title: str) -> str:
-        return inspect_window(get_desktop(), win32gui, window_handle, window_title)
+        import windows_mcp.uia as uia
+
+        with uia.UIAutomationInitializerInThread():
+            result = inspect_window(get_desktop(), win32gui, window_handle, window_title)
+            labels = read_window_labels(win32gui, uia, window_handle, window_title)
+        result += "\nVisible static labels:\n" + (labels or "[None exposed by this window]")
+        if len(result) > 100_000:
+            raise ValueError("Combined window inspection exceeded the text limit")
+        return result
 
     @server.tool(name="WindowSetValue", description=(
         "Set the complete value of ONE uniquely named Edit control observed by InspectWindow in an exact window. "
