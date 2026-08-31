@@ -1,0 +1,11 @@
+{
+  "name": "claude-minimax-reviewed-mcps",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned direct MCP dependencies; no daemon or startup scripts",
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "2026.7.10",
+    "@playwright/mcp": "0.0.79",
+    "@upstash/context7-mcp": "4.0.4"
+  }
+}

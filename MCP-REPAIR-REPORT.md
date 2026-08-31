@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # MCP Repair and Reliability Report
 
 Date: 2026-08-22

@@ -1,3 +1,6 @@
+> HISTORICAL DOCUMENT — superseded by README.md and docs/SAFETY_REVIEW.md.
+> Do not run old watchdog, permission-bypass, process-kill or repair instructions.
+
 # Threat Model (STRIDE)
 
 Asset: **the MiniMax API key**. Boundary: the proxy process on `127.0.0.1:48217`.

@@ -1,5 +1,2 @@
-# Load keys from C:\, G:\, or S:\ Private
-. $PSScriptRoot\\minimax_env.ps1
-
-# Open Codex Desktop with the paid plan first
-& codex app
+# Retired wrapper: do not inject MiniMax keys into the paid-plan desktop app.
+Write-Output 'Open Codex normally. For an explicit MiniMax Responses setup see README.md. No app was restarted.'

@@ -5,12 +5,12 @@
 
 repos:
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
       - id: flake8
-        name: flake8 (proxy + tests)
+        name: flake8 (gateways + MCP + tests)
         args: ['--max-line-length=120']
-        files: '^(claude-minimax-proxy\.py|tests/.*\.py)$'
+        files: '^(gateway_common\.py|responses_bridge\.py|configure_claude\.py|mcp_launcher\.py|claude-minimax-proxy\.py|api2codex\.py|scripts/.*\.py|tests/.*\.py)$'
 
   - repo: local
     hooks:

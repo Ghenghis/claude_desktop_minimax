@@ -1,0 +1,3 @@
+<!-- Retired template: never install this file. The explicit installer generates
+     path-escaped configuration with a restricted service account in ProgramData. -->
+<retired>Run scripts/Install-RequestGateways.ps1; no service definition here.</retired>

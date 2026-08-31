@@ -1,0 +1,4 @@
+# Minimal gateway runtime; independent of MCP and LiteLLM environments.
+fastapi==0.136.3
+httpx==0.28.1
+uvicorn==0.52.4

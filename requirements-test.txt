@@ -1,0 +1,4 @@
+-r requirements-gateway.txt
+flake8==7.3.0
+ruff==0.15.14
+mcp==1.28.1
