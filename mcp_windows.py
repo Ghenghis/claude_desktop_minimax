@@ -145,7 +145,8 @@ def register_window_inspection(server, get_desktop):
 
     @server.tool(name="WindowClick", description=(
         "Click coordinates observed inside one exact window. Rechecks title, foreground and point visibility. "
-        "Does not launch or resize windows and never attaches application input threads. Fails if Windows refuses focus."
+        "Does not launch or resize windows and never attaches application input threads. "
+        "Fails if Windows refuses focus."
     ))
     def click(window_handle: int, window_title: str, x: int, y: int,
               button: Literal["left", "right", "middle"] = "left", clicks: Literal[1, 2] = 1) -> str:

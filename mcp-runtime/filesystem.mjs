@@ -16,4 +16,3 @@ StdioServerTransport.prototype.send = function(message) {
   return originalSend.call(this, message);
 };
 await import('@modelcontextprotocol/server-filesystem/dist/index.js');
-

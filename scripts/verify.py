@@ -13,7 +13,8 @@ def main():
         if not path.is_relative_to(ROOT) or path.suffix != '.py' or not path.is_file():
             raise ValueError('Verifier accepts existing Python source files inside this repository only')
         compile(path.read_text(encoding='utf-8-sig'), str(path), 'exec')
-    result = subprocess.run([sys.executable, '-m', 'flake8', *map(str, files)], cwd=ROOT,
+    command = [sys.executable, '-m', 'flake8', '--config', str(ROOT / '.flake8'), *map(str, files)]
+    result = subprocess.run(command, cwd=ROOT,
                             timeout=60, creationflags=0x08000000 if sys.platform == 'win32' else 0)
     print(f'Verified {len(files)} source files; no dependency directories scanned.')
     raise SystemExit(result.returncode)

@@ -137,6 +137,7 @@ async def check(entry, report):
                     assert not result.isError and not value.lower().startswith(("error", "failed")), value[:100]
                     row["workflow"] = "Live MiniMax web search returned results"
                     # Synthetic solid-color fixture only. Never upload a user screenshot/file.
+
                     def chunk(kind, data):
                         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
 

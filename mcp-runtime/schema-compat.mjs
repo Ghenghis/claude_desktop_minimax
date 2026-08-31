@@ -25,4 +25,3 @@ export function modernSchema(schema) {
   }
   return out;
 }
-
