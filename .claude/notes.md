@@ -50,3 +50,11 @@ needs to know.
 **Why**: A connected tool list and successful registry write did not establish a usable native client. Earlier shape-only proxy tests did not establish streaming/error behavior.
 **Lesson**: No automatic repairs, broad process stops, bypass permissions or plaintext secret reports. Preserve stock Claude execution; keep adapters request-driven. Explicit isolated FastAPI/httpx dependencies replace the old stdlib-only preference because the Responses ASGI transport is now exercised and bounded.
 **Status**: Safety repairs applied; release evidence must state native-test and platform limitations honestly. Historical entries above describe earlier builds and do not authorize restoring supervisors.
+
+## 2026-08-30 — Native acceptance and published safety candidate
+
+**Tried**: Tested stock Desktop coding, filesystem, browser, docs/search, voice catalogue, SSH and WSL. Exercised exact-window accessibility input in a disposable WinForms fixture. Ran Windows/Linux CI on Python 3.11/3.14.
+**Result**: Native Windows SetValue/Invoke and final static-label read-back pass. 51 offline Python tests and three schema tests pass; all four CI jobs pass. Latest deployed gateway routes complete successfully. Final evidence is in docs/RELEASE_VALIDATION.md.
+**Why**: Real native tests exposed omitted static labels, skipped window enumeration with use_ui_tree=false, and focus refusal. Windows CI exposed a socket reset on overloaded rejection; bounded half-close/drain fixes it. Static labels and semantic controls now allow verification without forced focus.
+**Lesson**: Prefer exact named accessibility controls. Do not bypass focus restrictions or attach input queues. A metadata-only Snapshot is not proof of Windows input. Keep the expired GitLab credential private; the reviewed safety branch is published to the authorized GitHub repository with its original history preserved.
+**Status**: Core acceptance complete; optional editor bridges, Cowork VM, paid generation, fresh-host install and long-duration soak remain explicitly unverified. Never turn those limitations into automatic repair loops.

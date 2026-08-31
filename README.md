@@ -7,6 +7,8 @@ permissions, terminal and tool execution. The adapter never executes tools.
 Use the repaired native-client integration, not Grok's replacement website or
 either old watchdog harness. See [the review](docs/SAFETY_REVIEW.md) and
 [the repeatable acceptance test](docs/CLAUDE_ACCEPTANCE.md).
+The [validation record](docs/RELEASE_VALIDATION.md) separates observed passes
+from untested workflows and documents the safety refusals found during testing.
 
 ## What is included
 
@@ -64,7 +66,9 @@ Windows MCP and this installer are Windows-only.
 
 1. Keep source in a trusted local directory. Put `MINIMAX_API_KEY=...` in
    `C:\private\.env`; do not paste a secret into the repository or chat.
-2. Run `./Harden-MinimaxEnv.ps1` and `./scripts/Generate-ProxyToken.ps1` explicitly
+2. On an older installation, explicitly run `./scripts/Disable-MinimaxWatchdogs.ps1`
+   to back up and disable the recognized legacy tasks. It does not kill processes.
+   Run `./Harden-MinimaxEnv.ps1` and `./scripts/Generate-ProxyToken.ps1` explicitly
    in PowerShell 7. Existing local tokens are preserved unless `-Rotate` is used.
 3. Run `./scripts/Install-Dependencies.ps1`. Dependencies are pinned, isolated,
    and downloaded only at this explicit step, not when a client connects.
